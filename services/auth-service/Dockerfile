@@ -40,11 +40,12 @@ FROM alpine:3.20
 
 # Instala certificados para chamadas HTTPS (caso o serviço faça requests HTTPS),
 # e cria um usuário não-root (boa prática de segurança).
+
 RUN apk add --no-cache ca-certificates \
   && addgroup -S app \
   && adduser -S app -G app
 
-# Diretório do app no runtime
+  # Diretório do app no runtime
 WORKDIR /app
 
 # Copia somente o binário compilado do stage builder
@@ -54,7 +55,7 @@ COPY --from=builder /out/service /app/service
 USER app
 
 # Porta documentada (quem define a porta real é a env PORT e o docker-compose faz o mapeamento)
-EXPOSE 8000
+EXPOSE 8001
 
 # Comando principal do container
 ENTRYPOINT ["/app/service"]
