@@ -162,7 +162,7 @@ services:
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
 
-      # SQS desabilitado no local (se o Python não tolerar, ajustamos no próximo passo)
+      # SQS desabilitado no local
       AWS_SQS_URL: ""
     ports:
       - "${ANALYTICS_PORT}:8005"
