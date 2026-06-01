@@ -426,7 +426,7 @@ kubectl get pods -n togglemaster
 
 ## 👥 Time
 
-Projeto desenvolvido para a **Fase 2 do Tech Challenge** da pós-graduação em **Arquitetura de Software** — POSTECH FIAP.
+Projeto desenvolvido para a **Fase 2 do Tech Challenge** da pós-graduação em **DevOps e Arquitetura Cloud** — POSTECH FIAP.
 
 | Integrante | RM | GitHub |
 |---|---|---|
