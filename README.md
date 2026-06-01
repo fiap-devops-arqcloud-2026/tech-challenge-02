@@ -428,9 +428,13 @@ kubectl get pods -n togglemaster
 
 Projeto desenvolvido para a **Fase 2 do Tech Challenge** da pós-graduação em **Arquitetura de Software** — POSTECH FIAP.
 
-| Integrante | GitHub |
-|---|---|
-| Gabriel Silva | [@Tocaccelli](https://github.com/Tocaccelli) |
+| Integrante | RM | GitHub |
+|---|---|---|
+| Gabriel Silva | RM373763 | [@Tocaccelli](https://github.com/Tocaccelli) |
+| João Ciardullo | — | [@joaociardullo](https://github.com/joaociardullo) |
+| Douglas | — | [@Douglasdeveza](https://github.com/Douglasdeveza) |
+| Felipe Brito | — | [@Durmiand](https://github.com/Durmiand) |
+| João Gabriel | — | [@jgabrieldev1](https://github.com/jgabrieldev1) |
 
 ---
 
