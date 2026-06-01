@@ -2,3 +2,6 @@
 .env.*
 !.env.example
 *.exe
+.claude
+# PDFs são binários grandes — não pertencem ao repositório
+*.pdf

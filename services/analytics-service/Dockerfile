@@ -53,7 +53,9 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates \
       libpq5 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r app \
+    && useradd --no-log-init -r -g app -d /app app
 
 # Copia as wheels prontas do builder para o runtime
 COPY --from=builder /wheels /wheels
@@ -64,13 +66,12 @@ RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
 # Copia o código do serviço para dentro do container
 COPY . .
 
-# Porta "documentada" (quem mapeia é o docker-compose.yml).
-# Mantemos 8000 como padrão genérico, mas o gunicorn vai usar $PORT do compose.
-EXPOSE 8000
+# Garante que o usuário app é dono de todos os arquivos da pasta /app
+RUN chown -R app:app /app
 
-# Start do serviço:
-# - usa gunicorn
-# - bind em 0.0.0.0 para aceitar conexões de fora do container
-# - porta vem de $PORT (injetada no docker-compose)
-# - app:app é o padrão que os READMEs indicam
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} app:app"]
+# A partir daqui, tudo roda como usuário não-root (boa prática de segurança)
+USER app
+
+EXPOSE 8005
+
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8005} app:app"]

@@ -62,7 +62,7 @@ services:
     networks: [toggle-net]
 
   dynamodb-local:
-    image: amazon/dynamodb-local:latest
+    image: amazon/dynamodb-local:3.3.0
     restart: unless-stopped
     command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-inMemory"]
     ports:
@@ -86,6 +86,15 @@ services:
     depends_on:
       postgres-auth:
         condition: service_healthy
+    healthcheck:
+      # wget está disponível no Alpine (imagem base do serviço Go)
+      # -q: silencioso (sem progresso), -O-: joga a resposta no stdout (descartada)
+      # O Docker considera saudável se o comando retornar código 0 (sucesso HTTP)
+      test: ["CMD", "wget", "-qO-", "http://localhost:8001/health"]
+      interval: 10s      # verifica a cada 10 segundos
+      timeout: 5s        # espera até 5s pela resposta antes de considerar falha
+      retries: 5         # após 5 falhas seguidas, marca como "unhealthy"
+      start_period: 15s  # aguarda 15s após o início antes de começar a verificar
     networks: [toggle-net]
 
   flag-service:
@@ -102,7 +111,15 @@ services:
       postgres-app:
         condition: service_healthy
       auth-service:
-        condition: service_started
+        condition: service_healthy  # mudado de service_started: agora espera o auth responder de verdade
+    healthcheck:
+      # Python slim não tem wget/curl instalado, então usamos o próprio Python
+      # urllib.request é uma biblioteca nativa do Python, sem instalação extra
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks: [toggle-net]
 
   targeting-service:
@@ -119,7 +136,13 @@ services:
       postgres-app:
         condition: service_healthy
       auth-service:
-        condition: service_started
+        condition: service_healthy  # mudado de service_started: agora espera o auth responder de verdade
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks: [toggle-net]
 
   evaluation-service:
@@ -142,9 +165,15 @@ services:
       redis:
         condition: service_healthy
       flag-service:
-        condition: service_started
+        condition: service_healthy  # mudado de service_started: espera o flag-service estar respondendo
       targeting-service:
-        condition: service_started
+        condition: service_healthy  # mudado de service_started: espera o targeting-service estar respondendo
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8004/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks: [toggle-net]
 
   analytics-service:
@@ -168,7 +197,13 @@ services:
       - "${ANALYTICS_PORT}:8005"
     depends_on:
       dynamodb-local:
-        condition: service_started
+        condition: service_started  # mantido: dynamodb-local não tem healthcheck configurável
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8005/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks: [toggle-net]
 
 networks:
