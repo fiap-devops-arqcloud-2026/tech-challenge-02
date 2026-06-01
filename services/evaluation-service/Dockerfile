@@ -54,7 +54,7 @@ COPY --from=builder /out/service /app/service
 USER app
 
 # Porta documentada (quem define a porta real é a env PORT e o docker-compose faz o mapeamento)
-EXPOSE 8000
+EXPOSE 8004
 
 # Comando principal do container
 ENTRYPOINT ["/app/service"]

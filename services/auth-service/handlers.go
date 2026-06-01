@@ -1,8 +1,8 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
+	//	"crypto/sha256" <-- Dep. não usadas que matam o código
+	//	"encoding/hex" <-- Dep. não usadas que matam o código
 	"encoding/json"
 	"log"
 	"net/http"

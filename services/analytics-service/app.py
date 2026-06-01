@@ -10,11 +10,9 @@ from botocore.exceptions import NoCredentialsError, ClientError
 from flask import Flask, jsonify
 from dotenv import load_dotenv
 
-# Configura o logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 log = logging.getLogger(__name__)
 
-# Carrega .env para desenvolvimento local
 load_dotenv()
 
 # --- Configuração ---
@@ -22,116 +20,125 @@ AWS_REGION = os.getenv("AWS_REGION")
 SQS_QUEUE_URL = os.getenv("AWS_SQS_URL")
 DYNAMODB_TABLE_NAME = os.getenv("AWS_DYNAMODB_TABLE")
 
-if not all([AWS_REGION, SQS_QUEUE_URL, DYNAMODB_TABLE_NAME]):
-    log.critical("Erro: AWS_REGION, AWS_SQS_URL, e AWS_DYNAMODB_TABLE devem ser definidos.")
+# SQS_ENABLED é True apenas quando a URL da fila foi realmente informada.
+# Em desenvolvimento local, AWS_SQS_URL fica vazia — o worker simplesmente não sobe,
+# mas o /health continua respondendo normalmente.
+SQS_ENABLED = bool(SQS_QUEUE_URL)
+
+if not AWS_REGION:
+    log.critical("Erro: AWS_REGION deve ser definida.")
     sys.exit(1)
 
-# --- Clientes Boto3 ---
-# Criamos a sessão uma vez
-try:
-    session = boto3.Session(region_name=AWS_REGION)
-    sqs_client = session.client("sqs")
-    dynamodb_client = session.client("dynamodb")
-    log.info(f"Clientes Boto3 inicializados na região {AWS_REGION}")
-except NoCredentialsError:
-    log.critical("Credenciais da AWS não encontradas. Verifique seu ambiente.")
-    sys.exit(1)
-except Exception as e:
-    log.critical(f"Erro ao inicializar o Boto3: {e}")
-    sys.exit(1)
+# Clientes Boto3 são criados apenas quando SQS está habilitado.
+# Em modo local, não precisamos de nenhum cliente AWS.
+sqs_client = None
+dynamodb_client = None
+
+if SQS_ENABLED:
+    # Em produção (EKS), todas as variáveis são obrigatórias
+    if not DYNAMODB_TABLE_NAME:
+        log.critical("Erro: AWS_DYNAMODB_TABLE deve ser definida quando AWS_SQS_URL está configurada.")
+        sys.exit(1)
+    try:
+        session = boto3.Session(region_name=AWS_REGION)
+        sqs_client = session.client("sqs")
+        dynamodb_client = session.client("dynamodb")
+        log.info(f"Clientes Boto3 inicializados na região {AWS_REGION}.")
+    except NoCredentialsError:
+        log.critical("Credenciais da AWS não encontradas. Verifique seu ambiente.")
+        sys.exit(1)
+    except Exception as e:
+        log.critical(f"Erro ao inicializar o Boto3: {e}")
+        sys.exit(1)
+else:
+    # Aviso claro no log para quem inspecionar o container localmente
+    log.warning("AWS_SQS_URL não configurada — worker SQS desabilitado (modo local/desenvolvimento).")
 
 
 # --- SQS Worker ---
 
 def process_message(message):
-    """ Processa uma única mensagem SQS e a insere no DynamoDB """
+    """Processa uma única mensagem SQS e insere o evento no DynamoDB."""
     try:
         log.info(f"Processando mensagem ID: {message['MessageId']}")
         body = json.loads(message['Body'])
-        
-        # Gera um ID único para o item no DynamoDB
+
         event_id = str(uuid.uuid4())
-        
-        # Constrói o item no formato do DynamoDB
+
         item = {
             'event_id': {'S': event_id},
-            'user_id': {'S': body['user_id']},
-            'flag_name': {'S': body['flag_name']},
-            'result': {'BOOL': body['result']},
-            'timestamp': {'S': body['timestamp']}
+            'user_id':  {'S': body['user_id']},
+            'flag_name':{'S': body['flag_name']},
+            'result':   {'BOOL': body['result']},
+            'timestamp':{'S': body['timestamp']}
         }
-        
-        # Insere no DynamoDB
-        dynamodb_client.put_item(
-            TableName=DYNAMODB_TABLE_NAME,
-            Item=item
-        )
-        
+
+        dynamodb_client.put_item(TableName=DYNAMODB_TABLE_NAME, Item=item)
         log.info(f"Evento {event_id} (Flag: {body['flag_name']}) salvo no DynamoDB.")
-        
-        # Se tudo deu certo, deleta a mensagem da fila
+
+        # Só deleta da fila após salvar com sucesso no DynamoDB
         sqs_client.delete_message(
             QueueUrl=SQS_QUEUE_URL,
             ReceiptHandle=message['ReceiptHandle']
         )
-        
+
     except json.JSONDecodeError:
         log.error(f"Erro ao decodificar JSON da mensagem ID: {message['MessageId']}")
-        # Não deleta a mensagem, pode ser uma "poison pill"
+        # Não deleta: mensagem volta para a fila após o timeout de visibilidade
     except ClientError as e:
-        log.error(f"Erro do Boto3 (DynamoDB ou SQS) ao processar {message['MessageId']}: {e}")
-        # Não deleta a mensagem, tenta novamente
+        log.error(f"Erro Boto3 ao processar {message['MessageId']}: {e}")
     except Exception as e:
         log.error(f"Erro inesperado ao processar {message['MessageId']}: {e}")
-        # Não deleta a mensagem, tenta novamente
+
 
 def sqs_worker_loop():
-    """ Loop principal do worker que ouve a fila SQS """
+    """Loop infinito que faz long-polling na fila SQS."""
     log.info("Iniciando o worker SQS...")
     while True:
         try:
-            # Long-polling: espera até 20s por mensagens
+            # WaitTimeSeconds=20 → long-polling: só retorna quando há mensagem ou após 20s
             response = sqs_client.receive_message(
                 QueueUrl=SQS_QUEUE_URL,
-                MaxNumberOfMessages=10,  # Processa em lotes de até 10
+                MaxNumberOfMessages=10,
                 WaitTimeSeconds=20
             )
-            
+
             messages = response.get('Messages', [])
             if not messages:
-                # Nenhuma mensagem, continua o loop
                 continue
-                
+
             log.info(f"Recebidas {len(messages)} mensagens.")
-            
             for message in messages:
                 process_message(message)
-                
+
         except ClientError as e:
-            log.error(f"Erro do Boto3 no loop principal do SQS: {e}")
-            time.sleep(10) # Pausa antes de tentar novamente
+            log.error(f"Erro Boto3 no loop SQS: {e}")
+            time.sleep(10)
         except Exception as e:
-            log.error(f"Erro inesperado no loop principal do SQS: {e}")
+            log.error(f"Erro inesperado no loop SQS: {e}")
             time.sleep(10)
 
-# --- Servidor Flask (Apenas para Health Check) ---
+
+# --- Servidor Flask (apenas para health check) ---
 
 app = Flask(__name__)
 
 @app.route('/health')
 def health():
-    # Uma verificação de saúde real poderia checar a conexão com o DynamoDB/SQS
     return jsonify({"status": "ok"})
+
 
 # --- Inicialização ---
 
 def start_worker():
-    """ Inicia o worker SQS em uma thread separada """
+    """Inicia o worker SQS em thread separada — apenas se SQS estiver configurado."""
+    if not SQS_ENABLED:
+        # Modo local: não inicia o worker, mas o Flask continua rodando normalmente
+        return
     worker_thread = threading.Thread(target=sqs_worker_loop, daemon=True)
     worker_thread.start()
 
-# Inicia o worker SQS em uma thread de background
-# Isso garante que ele inicie tanto com 'flask run' quanto com 'gunicorn'
+
 start_worker()
 
 if __name__ == '__main__':
