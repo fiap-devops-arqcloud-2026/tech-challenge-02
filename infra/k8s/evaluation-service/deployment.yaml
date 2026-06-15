@@ -32,7 +32,7 @@ spec:
       containers:
         - name: evaluation-service
           # Imagem do ECR — substitua com seus dados reais
-          image: <AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/evaluation-service:latest
+          image: 891376952395.dkr.ecr.us-east-2.amazonaws.com/evaluation-service:latest
           imagePullPolicy: Always
 
           ports:

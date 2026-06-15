@@ -31,7 +31,7 @@ spec:
       containers:
         - name: flag-service
           # Imagem do ECR — substitua com seus dados reais
-          image: <AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/flag-service:latest
+          image: 891376952395.dkr.ecr.us-east-2.amazonaws.com/flag-service:latest
           imagePullPolicy: Always  # sempre baixa a versão mais recente da tag :latest
 
           ports:

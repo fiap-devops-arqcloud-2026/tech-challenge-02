@@ -39,7 +39,7 @@ spec:
         - name: auth-service
           # Imagem publicada no ECR — substitua com seus dados reais
           # Para usar DockerHub: seu-usuario/auth-service:latest
-          image: <AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/auth-service:latest
+          image: 891376952395.dkr.ecr.us-east-2.amazonaws.com/auth-service:latest
 
           # Always: garante que o Kubernetes sempre baixe a imagem mais recente
           # Essencial quando se usa a tag :latest para garantir que o deploy seja aplicado
