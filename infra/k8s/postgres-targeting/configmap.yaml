@@ -1,0 +1,62 @@
+# ============================================================
+# CONFIGMAP — postgres-targeting (schema inicial do banco)
+# ============================================================
+# A imagem oficial do PostgreSQL executa automaticamente qualquer arquivo
+# .sql ou .sh colocado em /docker-entrypoint-initdb.d/ — MAS só na PRIMEIRA
+# vez que o banco é criado (quando o volume está vazio). Em reinícios
+# seguintes, com o volume já populado, esses scripts são ignorados.
+#
+# Aqui embutimos o schema do targeting_db (mesma tabela do init.sql local,
+# em services/targeting-service/db/init.sql). Montamos este ConfigMap como
+# um arquivo dentro daquela pasta no StatefulSet.
+#
+# OBS: é uma cópia do schema de origem. Se um dia o init.sql do serviço
+# mudar, lembre de refletir a mudança aqui também.
+# ============================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-targeting-init
+  namespace: togglemaster
+  labels:
+    app: postgres-targeting
+
+data:
+  # A chave "init.sql" vira o arquivo /docker-entrypoint-initdb.d/init.sql
+  # dentro do container do PostgreSQL.
+  init.sql: |
+    CREATE TABLE IF NOT EXISTS targeting_rules (
+        id SERIAL PRIMARY KEY,
+
+        -- 'flag_name' é a chave de negócio única.
+        -- Cada flag pode ter no máximo UMA regra de segmentação.
+        flag_name VARCHAR(100) UNIQUE NOT NULL,
+
+        -- Se a regra de segmentação em si está ativa ou não
+        is_enabled BOOLEAN NOT NULL DEFAULT true,
+
+        -- Armazena a lógica da regra como um JSON.
+        -- Ex: {"type": "PERCENTAGE", "value": 50}
+        -- Ex: {"type": "USER_LIST", "values": ["u1", "u2"]}
+        rules JSONB NOT NULL,
+
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Trigger para atualizar 'updated_at' automaticamente (igual ao do flag-service)
+    CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      NEW.updated_at = NOW();
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+
+    DROP TRIGGER IF EXISTS set_timestamp ON targeting_rules;
+
+    CREATE TRIGGER set_timestamp
+    BEFORE UPDATE ON targeting_rules
+    FOR EACH ROW
+    EXECUTE PROCEDURE trigger_set_timestamp();
