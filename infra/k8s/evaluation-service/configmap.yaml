@@ -30,4 +30,4 @@ data:
   TARGETING_SERVICE_URL: "http://targeting-service:8003"
 
   # Região AWS onde o SQS e outros serviços estão provisionados
-  AWS_REGION: "us-east-1"   # altere se usar outra região
+  AWS_REGION: "us-east-2"   # Ohio — região onde toda a infra do projeto foi criada

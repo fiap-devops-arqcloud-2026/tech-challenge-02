@@ -7,7 +7,7 @@
 #
 # ANTES DE APLICAR: substitua <AWS_ACCOUNT_ID> e <AWS_REGION>
 # pelo seu Account ID da AWS e a região onde criou o ECR.
-# Exemplo de imagem: 123456789012.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
+# Exemplo de imagem: 123456789012.dkr.ecr.us-east-2.amazonaws.com/auth-service:latest
 # ============================================================
 
 apiVersion: apps/v1
