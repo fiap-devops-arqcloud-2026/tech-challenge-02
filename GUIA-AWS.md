@@ -1,5 +1,11 @@
 # ☁️ Guia de Deploy na AWS — ToggleMaster
 
+> ⚠️ **ATENÇÃO — ESTE GUIA ESTÁ PARCIALMENTE DESATUALIZADO.**
+> Ele descreve o plano inicial: **3 instâncias RDS** e região **us-east-1**. A arquitetura mudou para:
+> **2 RDS** (auth, flags) + **targeting como pod no EKS** + **ElastiCache** (Redis), tudo em **us-east-2 (Ohio)**.
+> A **fonte da verdade atual** é a pasta `00_COLAB_IA/` (DOSSIE / PENDENCIAS / DECISOES).
+> A atualização completa deste guia é a pendência **P-006**.
+
 > **Para quem é este guia?** Para qualquer pessoa que queira colocar o ToggleMaster rodando na AWS, mesmo sem experiência prévia com cloud.
 >
 > **Tempo estimado:** 2 a 3 horas para criar toda a infraestrutura.
