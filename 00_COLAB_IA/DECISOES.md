@@ -2,7 +2,7 @@
 
 > **TL;DR:** Decisões de arquitetura/processo com o PORQUÊ. Não reescrever decisões antigas — só mudar o Status ou adicionar nova.
 >
-> **Última atualização:** 2026-06-28 19:52 (BRT) — Claude (Opus 4.8)
+> **Última atualização:** 2026-06-29 — Claude (Opus 4.8)
 
 ---
 
@@ -38,3 +38,17 @@
 - **Por quê:** O repo é **privado** (`fiap-devops-arqcloud-2026/tech-challenge-02`), então não há exposição. Assim, um único `git pull`/`push` sincroniza código + contexto entre os dois notebooks, e o contexto também fica disponível para o Codex.
 - **Alternativas:** sincronizar via OneDrive/Drive (mais frágil, conflita com o Git) ou repo separado (overkill) — rejeitadas.
 - **Status:** ✅ Decidida e aplicada em 2026-06-28.
+
+## D-006 — Entrega mínima da FIAP: 1 réplica por serviço + HPA enxuto + node group t3.medium
+- **Contexto:** Gabriel quer entregar exatamente o que o PDF da FIAP exige, "nada a mais — o básico e simples bem feito". O PDF (págs. 5 e 8) só obriga, sobre escalabilidade: (a) node group com auto scaling (ex.: Mínimo=1, Desejado=2, Máximo=4) e (b) **HPA por CPU em `evaluation-service` e `analytics-service`**. NÃO exige número de réplicas dos serviços, nem KEDA (KEDA é explicitamente "(Opcional) – Recomendado", não obrigatório).
+- **Decisão:**
+  - Todos os 5 serviços com `replicas: 1` (auth/flag/targeting/evaluation/analytics). Sem réplica extra de alta disponibilidade.
+  - HPA só em `evaluation` e `analytics`, com `min 1 / max 2` (sobem de 1→2 sob carga — suficiente para demonstrar a escalabilidade no vídeo).
+  - Sem KEDA (opcional → pulado).
+  - Node group: **2× t3.medium**, Min 1 / Desejado 2 / Máx 4.
+- **Por quê / alternativas:**
+  - `t3.micro` (Free Tier) é **inviável**: limite de ~4 pods por nó (consumidos pelos DaemonSets de sistema: aws-node, kube-proxy, pod-identity, node-monitoring) + só 1 GB de RAM. Descartada.
+  - 1 nó só (mesmo t3.medium): o HPA não teria onde colocar os pods novos da escalabilidade → ficariam "Pending" e a demonstração falharia. Por isso Desejado = 2 (a 2ª máquina é o "lugar" pros pods escalados).
+  - Manter 2 réplicas em auth/flag/targeting era só HA (escolha nossa), não exigência → reduzido a 1 para enxugar.
+  - Custo do node group ~US$ 0,08/h; ligar só na demo e derrubar depois (a economia de Free Tier não compensa o risco de a demo falhar).
+- **Status:** ✅ Decidida e **aplicada nos manifestos** em 2026-06-29 (4 deployments `replicas:1` + 2 HPAs `min1/max2`). Node group a criar (2026-06-30).

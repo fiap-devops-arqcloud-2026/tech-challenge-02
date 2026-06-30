@@ -17,8 +17,8 @@ metadata:
     app: evaluation-service
 
 spec:
-  # Começa com 2 réplicas — o HPA pode aumentar até o máximo definido em hpa.yaml
-  replicas: 2
+  # Começa com 1 réplica — alinhado ao minReplicas do HPA (ver hpa.yaml); o HPA sobe até o máximo sob carga
+  replicas: 1
 
   selector:
     matchLabels:

@@ -2,7 +2,35 @@
 
 > **TL;DR:** Diário de sessões. Nunca apagar/reescrever entradas antigas — só acrescentar no topo. A cada ~5 entradas, resumir as antigas no DOSSIE e manter só as 5 recentes aqui.
 >
-> **Última atualização:** 2026-06-28 19:52 (BRT) — Claude (Opus 4.8)
+> **Última atualização:** 2026-06-29 — Claude (Opus 4.8)
+
+---
+
+## 2026-06-29 — Claude (Opus 4.8) — Rede validada, IAM roles, cluster EKS criado + manifestos enxugados (entrega mínima)
+
+**Feito (via console AWS, Gabriel clicando passo a passo):**
+- **Rede (F-003) RESOLVIDO.** Auditamos TODAS as sub-redes e descobrimos que o VPC `vpc-03a557849629939d0` JÁ tinha 4 sub-redes em 2 AZs (o dossiê antigo dizia "só us-east-2a"). Mapa real:
+  - Públicas: `subnet-020ef26c5b392069e` (2a, 10.0.10.0/24) e `subnet-042a13d25a15bc975` (2b, 10.0.20.0/24) — ambas na route table pública `rtb-01248b4b82a5ce677` (rota `0.0.0.0/0 → igw-0364461e4d4226f8b` CONFIRMADA; auto-assign public IPv4 = Yes).
+  - Privadas: `subnet-061bdfce861d99204` (2a, 10.0.11.0/24) e `subnet-0e1a51660acf2b025` (2b, 10.0.12.0/24).
+  - Adicionada a tag `kubernetes.io/role/elb=1` nas 2 públicas (pré-requisito do Load Balancer do Nginx).
+- **IAM roles criadas** (conta pessoal, sem LabRole): `togglemaster-eks-cluster-role` (AmazonEKSClusterPolicy) e `togglemaster-eks-node-role` (AmazonEKSWorkerNodePolicy + AmazonEC2ContainerRegistryReadOnly + AmazonEKS_CNI_Policy).
+- **Cluster EKS `togglemaster-cluster` CRIADO e Active** (pelo console, NÃO eksctl): K8s 1.30, endpoint Public and private, control plane nas 2 sub-redes públicas, sem scaling tier, sem Auto Mode, Bootstrap admin = Allow.
+  - Add-ons: CoreDNS, kube-proxy, Amazon VPC CNI, EKS Pod Identity Agent, Node monitoring agent e **Metrics Server** (community add-on — já cumpre o pré-requisito do HPA; não precisa mais instalar via kubectl).
+  - Observability/logs do control plane: tudo DESLIGADO (evita custo CloudWatch).
+- **Manifestos enxugados (D-006, "entrega mínima FIAP"):** os 5 serviços com `replicas: 1`; HPA de evaluation e analytics de `min/max` antigos para `min 1 / max 2`. Só evaluation e analytics escalam (1→2), que é o que o PDF exige.
+
+**Decisão de máquina (a executar amanhã):** node group `workers` **2× t3.medium**, Min 1 / Desejado 2 / Máx 4. Motivo: t3.micro (Free Tier) é inviável (limite ~4 pods/nó + 1 GB RAM); 1 nó só não deixa o HPA escalar (pods ficariam Pending). Custo ~US$0,08/h, ligado só na demo. Ver D-006.
+
+**Descobertas:**
+- **F-003 RESOLVIDO** (VPC já tinha 2 AZs; dossiê estava incompleto — corrigido no DOSSIE §4).
+- A **chave IAM de deploy NÃO está mais pendente**: já configurada via `aws configure` e validada (ver memória privada `credenciais-deploy-aws`). Logo, as etapas de kubectl de amanhã NÃO estão bloqueadas.
+
+**Arquivos:** `infra/k8s/{auth,flag,targeting,evaluation}-service/deployment.yaml` (replicas→1), `infra/k8s/{evaluation,analytics}-service/hpa.yaml` (min1/max2), `00_COLAB_IA/{PENDENCIAS,DOSSIE,DECISOES,LOG}` (este update + D-006).
+
+**Estado p/ amanhã (próximo passo):**
+- **Cluster Active.** Próxima tarefa = **criar o node group** (2× t3.medium, Min1/Des2/Máx4) pelo console: aba Compute → Add node group → Node IAM role `togglemaster-eks-node-role` → sub-redes = as 2 públicas.
+- Depois, na ordem: **EBS CSI Driver** (add-on, criar role via Pod Identity) → **Nginx Ingress Controller** (Helm/kubectl) → `aws eks update-kubeconfig` → preencher secrets (valores na memória privada) → `kubectl apply -f infra/k8s/...` → vídeo → relatório.
+- **Metrics Server JÁ instalado** (add-on) — pular o `kubectl apply` do metrics-server.
 
 ---
 

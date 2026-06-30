@@ -27,11 +27,11 @@ spec:
     kind: Deployment
     name: evaluation-service  # deve bater com o nome do Deployment
 
-  # Número mínimo de pods — nunca vai abaixo disso (garante disponibilidade)
-  minReplicas: 2
+  # Número mínimo de pods — nunca vai abaixo disso (baseline enxuto p/ economizar recursos)
+  minReplicas: 1
 
-  # Número máximo de pods — nunca vai acima disso (controla custo)
-  maxReplicas: 5
+  # Número máximo de pods — nunca vai acima disso (controla custo / demo enxuta)
+  maxReplicas: 2
 
   # Critérios de escalonamento
   metrics:

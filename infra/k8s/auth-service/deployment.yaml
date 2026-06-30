@@ -20,8 +20,9 @@ metadata:
 
 spec:
   # Número de cópias (pods) rodando ao mesmo tempo
-  # 2 réplicas = alta disponibilidade: se um pod cair, o outro continua respondendo
-  replicas: 2
+  # 1 réplica — entrega mínima/enxuta. A FIAP não exige réplica extra aqui;
+  # só evaluation e analytics escalam (via HPA). Sem HPA, este serviço fica fixo em 1 pod.
+  replicas: 1
 
   # Define quais pods este Deployment controla (pelo label "app: auth-service")
   selector:

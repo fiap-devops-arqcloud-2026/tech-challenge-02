@@ -16,7 +16,7 @@ metadata:
     app: targeting-service
 
 spec:
-  replicas: 2           # 2 réplicas para alta disponibilidade
+  replicas: 1           # 1 réplica — entrega mínima/enxuta (sem HPA; só evaluation/analytics escalam)
 
   selector:
     matchLabels:
