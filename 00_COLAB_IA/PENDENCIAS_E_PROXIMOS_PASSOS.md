@@ -1,10 +1,18 @@
 # PENDÊNCIAS E PRÓXIMOS PASSOS
 
-> **TL;DR:** Backlog priorizado (P-###) e achados (F-###). O **control plane do cluster EKS já está criado e Active**. **PRÓXIMA TAREFA: criar o NODE GROUP** (as máquinas) — 2× t3.medium, Min 1 / Desejado 2 / Máx 4. Depois: EBS CSI → Nginx Ingress → conectar kubectl → preencher secrets → deploy → vídeo.
+> **TL;DR:** Backlog priorizado (P-###) e achados (F-###). **A APLICAÇÃO ESTÁ NO AR na AWS (deploy completo e verificado em 2026-07-06).** LB público: `a4e86e3f9b5564375bcbe8c46ad4acee-fc7302f5c0e6e08e.elb.us-east-2.amazonaws.com`. **PRÓXIMA TAREFA: gravar o vídeo (P-007)** — roteiro no chat de 2026-07-06. ⚠️ Cluster LIGADO (~US$0,19/h); derrubar após a gravação.
 >
-> **Última atualização:** 2026-06-29 — Claude (Opus 4.8).
+> **Última atualização:** 2026-07-06 — Claude (Fable 5).
 
 ## Concluído
+
+### 2026-07-06 — DEPLOY COMPLETO ✅
+- ✅ **P-004b — Node group `workers`** (2× **c7i-flex.large** — t3.medium bloqueada pelo plano gratuito, ver D-007), Min 1/Des 2/Máx 4.
+- ✅ **P-004c — EBS CSI Driver** (add-on, Pod Identity). StorageClass `gp2` marcada como default.
+- ✅ **P-004d — Nginx Ingress v1.15.1**. LB: `a4e86e3f9b5564375bcbe8c46ad4acee-fc7302f5c0e6e08e.elb.us-east-2.amazonaws.com`.
+- ✅ **kubectl conectado** (usuário `togglemaster-deploy` ganhou policy `eks:*` + access entry admin no cluster).
+- ✅ **P-005 — Secrets preenchidos (valores reais versionados) e deploy feito.** 6 pods Running. `SERVICE_API_KEY` real no `evaluation-service/secret.yaml`; `MASTER_KEY` = `tm-master-5lQ76l3nYa7LVlDd5w1vTECmYKoxZjR`. Consertos: SG do RDS (5432), `init.sql` do auth e do flags rodados nos RDS.
+- ✅ **Verificado ponta a ponta:** flags via LB público, evento SQS→analytics→DynamoDB (1 item), HPAs lendo CPU.
 
 ### 2026-06-29 (via console AWS)
 - ✅ **Rede pronta — F-003 resolvido.** O VPC `vpc-03a557849629939d0` já tinha 4 sub-redes em 2 AZs (mapa no DOSSIE §4). Tag `kubernetes.io/role/elb=1` adicionada nas 2 sub-redes públicas (pré-requisito do Load Balancer do Nginx).
@@ -19,26 +27,14 @@
 - ✅ **P-002 — SQS `togglemaster-events`** (Standard). URL: `https://sqs.us-east-2.amazonaws.com/891376952395/togglemaster-events`
 - ✅ **P-003 — ElastiCache `togglemaster-redis`** (Redis OSS 7.1, `cache.t3.micro`, sub-rede privada). Endpoint `togglemaster-redis.ewbn3x.ng.0001.use2.cache.amazonaws.com:6379` — já no `evaluation-service/configmap.yaml`. SG `sg-0e79721741070ef64` com 6379 liberado p/ 10.0.0.0/16.
 
-## ⏭️ PRÓXIMA TAREFA — P-004b: Criar o node group (as máquinas)
-Cluster já Active. Criar o grupo de nós pelo **console** (custo ~US$ 0,08/h — ligar só p/ testar/gravar e derrubar depois).
+## ⏭️ PRÓXIMA TAREFA — P-007: Gravar o vídeo da demo (até 20 min)
+Tudo pronto e funcionando. Roteiro detalhado entregue ao Gabriel no chat de 2026-07-06 (local via docker compose + nuvem + escalabilidade com `hey`/PowerShell + DynamoDB + explicações exigidas pelo PDF pág. 9).
+- ⚠️ **Cluster está LIGADO** (2 nós c7i-flex.large + LB ≈ US$0,19/h) por decisão do Gabriel, para gravar.
+- **Depois da gravação, derrubar:** node group `workers` (Compute → Edit → Desired 0, ou delete) e `kubectl delete ns ingress-nginx` (remove o LB). RDS/SQS/DynamoDB/ElastiCache podem ficar (baratos/grátis parados).
 
-Passo a passo (console):
-1. Abrir o cluster `togglemaster-cluster` → aba **Compute** → **Add node group**.
-2. **Name:** `workers` · **Node IAM role:** `togglemaster-eks-node-role` → Next.
-3. **AMI:** Amazon Linux 2023 · **Instance type:** **t3.medium** · **Disk:** 20 GiB · **Scaling:** Min 1 / Desired 2 / Max 4 → Next.
-4. **Subnets:** as 2 públicas (`subnet-020ef26c5b392069e` + `subnet-042a13d25a15bc975`) · SSH access desativado → Next.
-5. **Review and create** → Create (~3–5 min até os nós ficarem Ready).
-
-> Por que t3.medium e 2 nós: t3.micro (Free Tier) é inviável (limite ~4 pods/nó — só os DaemonSets já enchem — + 1 GB RAM); 1 nó só não deixa o HPA escalar (os pods novos ficariam Pending). Ver D-006.
-
-## A fazer (depois do node group)
-- **P-004c — EBS CSI Driver** (necessário para o disco do pod targeting). Como o **EKS Pod Identity Agent** já está instalado, dá para adicionar pelo **console** (aba Add-ons → Amazon EBS CSI Driver → criar a role recomendada via Pod Identity). Alternativa por linha de comando (eksctl/OIDC) no fim deste arquivo.
-- **P-004d — Nginx Ingress Controller** (via Helm ou kubectl) — cria o Load Balancer público. (Metrics Server JÁ instalado — pular esse passo.)
-- **Conectar o kubectl:** `aws eks update-kubeconfig --region us-east-2 --name togglemaster-cluster`. As credenciais IAM de deploy **já estão configuradas** (`aws configure` feito e validado; valores na memória privada do Claude — não versionados).
-- **P-005 — Preencher secrets/configmaps e deploy** (`kubectl apply -f infra/k8s/...`). Checklist no fim. Inclui aplicar `infra/k8s/postgres-targeting/` (precisa do EBS CSI antes) e criar a `SERVICE_API_KEY` de produção.
+## A fazer (depois do vídeo)
+- **P-008 — Relatório de entrega (.PDF ou .txt):** nomes + RM + Discord de todos (faltam os RMs de João Ciardullo, Douglas, Felipe Brito e João Gabriel), link do repositório e link do vídeo (YouTube).
 - **P-006 — Atualizar `GUIA-AWS.md`** (us-east-2 + 2 RDS + 1 pod + ElastiCache, em vez de 3 RDS/us-east-1). Ver F-002.
-- **P-007 — Gravar o vídeo da demo** (até 20 min: local + nuvem + escalabilidade). Roteiro nos entregáveis do PDF.
-- **P-008 — Relatório de entrega:** faltam os RMs de João Ciardullo, Douglas, Felipe Brito e João Gabriel.
 
 ## Achados (F-###)
 - **F-001 — Inconsistência de região** (us-east-1 vs us-east-2). ✅ RESOLVIDO (commit 498f703).

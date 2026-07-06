@@ -2,7 +2,7 @@
 
 > **TL;DR:** Decisões de arquitetura/processo com o PORQUÊ. Não reescrever decisões antigas — só mudar o Status ou adicionar nova.
 >
-> **Última atualização:** 2026-06-29 — Claude (Opus 4.8)
+> **Última atualização:** 2026-07-06 — Claude (Fable 5)
 
 ---
 
@@ -51,4 +51,10 @@
   - 1 nó só (mesmo t3.medium): o HPA não teria onde colocar os pods novos da escalabilidade → ficariam "Pending" e a demonstração falharia. Por isso Desejado = 2 (a 2ª máquina é o "lugar" pros pods escalados).
   - Manter 2 réplicas em auth/flag/targeting era só HA (escolha nossa), não exigência → reduzido a 1 para enxugar.
   - Custo do node group ~US$ 0,08/h; ligar só na demo e derrubar depois (a economia de Free Tier não compensa o risco de a demo falhar).
-- **Status:** ✅ Decidida e **aplicada nos manifestos** em 2026-06-29 (4 deployments `replicas:1` + 2 HPAs `min1/max2`). Node group a criar (2026-06-30).
+- **Status:** ✅ Decidida e **aplicada nos manifestos** em 2026-06-29 (4 deployments `replicas:1` + 2 HPAs `min1/max2`). Node group criado em 2026-07-06 — mas com c7i-flex.large, não t3.medium (ver D-007).
+
+## D-007 — Node group com c7i-flex.large (o plano gratuito bloqueou a t3.medium)
+- **Contexto:** Ao criar o node group `workers` com t3.medium (2026-07-06), o EC2 recusou o lançamento: "The specified instance type is not eligible for Free Tier". A conta está no **plano gratuito novo da AWS**, que só permite lançar instâncias elegíveis ao Free Tier.
+- **Decisão:** Usar **c7i-flex.large** (2 vCPU, 4 GB — equivalente direto da t3.medium, ~US$ 0,085/h), mantendo Min 1 / Desejado 2 / Máx 4.
+- **Alternativas:** t3.small/micro (RAM/pods insuficientes — mesmo motivo de D-006); t4g (ARM — as imagens Docker são x86); m7i-flex.large (8 GB, mais cara — desnecessária); upgrade da conta para plano pago (evitável).
+- **Status:** ✅ Aplicada em 2026-07-06. Node group `workers` Active com 2× c7i-flex.large.

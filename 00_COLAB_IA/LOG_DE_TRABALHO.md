@@ -2,7 +2,27 @@
 
 > **TL;DR:** Diário de sessões. Nunca apagar/reescrever entradas antigas — só acrescentar no topo. A cada ~5 entradas, resumir as antigas no DOSSIE e manter só as 5 recentes aqui.
 >
-> **Última atualização:** 2026-06-29 — Claude (Opus 4.8)
+> **Última atualização:** 2026-07-06 — Claude (Fable 5)
+
+---
+
+## 2026-07-06 — Claude (Fable 5) — DEPLOY COMPLETO: node group, EBS CSI, Nginx Ingress, secrets e aplicação no ar 🎉
+
+**Feito (node group pelo console com Gabriel; resto via CLI pelo Claude):**
+- **P-004b — Node group `workers` criado e Active.** ⚠️ t3.medium foi RECUSADA pelo plano gratuito novo da AWS ("not eligible for Free Tier") → trocamos para **c7i-flex.large** (2 vCPU/4 GB, ~US$0,085/h), Min 1 / Des 2 / Máx 4, AL2023, 20 GiB, nas 2 sub-redes públicas (D-007). 2 nós Ready.
+- **P-004c — EBS CSI Driver** instalado (add-on via console, role via Pod Identity).
+- **Permissões do `togglemaster-deploy`:** o usuário não tinha acesso EKS. Adicionada inline policy `eks-access` (`eks:*`) + **access entry** no cluster com `AmazonEKSClusterAdminPolicy`. `kubectl` conectado (`aws eks update-kubeconfig`).
+- **P-004d — Nginx Ingress Controller v1.15.1** instalado (`kubectl apply`, provider AWS). LB público: `a4e86e3f9b5564375bcbe8c46ad4acee-fc7302f5c0e6e08e.elb.us-east-2.amazonaws.com`.
+- **P-005 — Secrets preenchidos e DEPLOY FEITO.** Todos os 6 `secret.yaml` com valores reais (versionados, lab autorizado). `MASTER_KEY` de produção: `tm-master-5lQ76l3nYa7LVlDd5w1vTECmYKoxZjR`. `SERVICE_API_KEY` real criada via `POST /admin/keys` e aplicada no evaluation.
+- **Consertos no caminho:**
+  - StorageClass `gp2` não era default → PVC do targeting ficou Pending → marcada como default + PVC recriado.
+  - SG `sg-06ca599ca5e54eb7d` (RDS) sem regra 5432 → liberado para 10.0.0.0/16.
+  - Tabelas não existiam nos RDS → rodados `services/{auth,flag}-service/db/init.sql` via psql do pod postgres-targeting-0.
+- **Verificação ponta a ponta (tudo OK):** 6 pods Running · `POST /flags` e `GET /evaluate` pelo LB público · evento SQS consumido pelo analytics · 1 item salvo no DynamoDB · HPAs lendo CPU (1–2%).
+
+**Estado p/ o próximo agente:**
+- **Aplicação NO AR.** ⚠️ **Cluster LIGADO por decisão do Gabriel** (2 nós + LB ≈ US$0,19/h) para gravar o vídeo (P-007). Depois da gravação: derrubar node group (scale 0 ou delete) + `kubectl delete ns ingress-nginx`.
+- Falta: **P-007 (vídeo)** — roteiro entregue ao Gabriel no chat de 2026-07-06 · **P-008 (relatório)** — faltam RMs de 4 integrantes · P-006 (GUIA-AWS.md desatualizado).
 
 ---
 
