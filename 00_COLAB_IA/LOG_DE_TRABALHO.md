@@ -20,6 +20,11 @@
   - Tabelas não existiam nos RDS → rodados `services/{auth,flag}-service/db/init.sql` via psql do pod postgres-targeting-0.
 - **Verificação ponta a ponta (tudo OK):** 6 pods Running · `POST /flags` e `GET /evaluate` pelo LB público · evento SQS consumido pelo analytics · 1 item salvo no DynamoDB · HPAs lendo CPU (1–2%).
 
+**Adendo (mesma sessão) — ambiente LOCAL validado para o vídeo:**
+- `docker compose up` falhou na 1ª tentativa: o `infra/postgres-app/01-init-multi-db.sh` estava com **CRLF** (quebra de linha Windows) → `/bin/sh^M: bad interpreter` no contêiner → `targeting_db` não era criado. **Consertado:** script convertido para LF + regras `*.sh`/`*.sql text eol=lf` no `.gitattributes` (⚠️ na outra máquina, após o `git pull`, o arquivo já vem certo).
+- Recriado do zero (`docker compose down -v && up -d`): **9/9 contêineres healthy**. Testado ponta a ponta local: chave criada via MASTER_KEY local (`admin-secreto-123`), flag `demo-local` criada e avaliada com `result:true`. `SERVICE_API_KEY` local nova salva no `.env` (a antiga morreu com o volume).
+- Contêineres locais parados com `docker compose down` (SEM `-v` — os volumes ficam, então no dia do vídeo basta `docker compose up -d` que tudo volta funcionando).
+
 **Estado p/ o próximo agente:**
 - **Aplicação NO AR.** ⚠️ **Cluster LIGADO por decisão do Gabriel** (2 nós + LB ≈ US$0,19/h) para gravar o vídeo (P-007). Depois da gravação: derrubar node group (scale 0 ou delete) + `kubectl delete ns ingress-nginx`.
 - Falta: **P-007 (vídeo)** — roteiro entregue ao Gabriel no chat de 2026-07-06 · **P-008 (relatório)** — faltam RMs de 4 integrantes · P-006 (GUIA-AWS.md desatualizado).
