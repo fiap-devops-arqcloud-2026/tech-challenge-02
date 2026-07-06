@@ -27,14 +27,19 @@
 - ✅ **P-002 — SQS `togglemaster-events`** (Standard). URL: `https://sqs.us-east-2.amazonaws.com/891376952395/togglemaster-events`
 - ✅ **P-003 — ElastiCache `togglemaster-redis`** (Redis OSS 7.1, `cache.t3.micro`, sub-rede privada). Endpoint `togglemaster-redis.ewbn3x.ng.0001.use2.cache.amazonaws.com:6379` — já no `evaluation-service/configmap.yaml`. SG `sg-0e79721741070ef64` com 6379 liberado p/ 10.0.0.0/16.
 
-## ⏭️ PRÓXIMA TAREFA — P-007: Gravar o vídeo da demo (até 20 min)
-Tudo pronto e funcionando. Roteiro detalhado entregue ao Gabriel no chat de 2026-07-06 (local via docker compose + nuvem + escalabilidade com `hey`/PowerShell + DynamoDB + explicações exigidas pelo PDF pág. 9).
-- ⚠️ **Cluster está LIGADO** (2 nós c7i-flex.large + LB ≈ US$0,19/h) por decisão do Gabriel, para gravar.
-- **Depois da gravação, derrubar:** node group `workers` (Compute → Edit → Desired 0, ou delete) e `kubectl delete ns ingress-nginx` (remove o LB). RDS/SQS/DynamoDB/ElastiCache podem ficar (baratos/grátis parados).
+## ⏭️ PRÓXIMA TAREFA — Fechar a entrega (P-008)
+✅ **Vídeo GRAVADO em 2026-07-06.** O que falta, na ordem:
+1. **Subir o vídeo no YouTube** (não listado serve) e guardar o link.
+2. **P-008 — Relatório de entrega (.PDF ou .txt):** nomes + RM + usernames do Discord de todos (**faltam os RMs de João Ciardullo, Douglas, Felipe Brito e João Gabriel**), link do repositório e link do vídeo. Base pronta: `docs/ARQUITETURA.md` (arquitetura, decisões e dificuldades já escritas).
+3. ⚠️ **Derrubar o que custa** (cluster ainda LIGADO ≈ US$0,19/h): node group `workers` (Compute → Edit → Desired 0, ou delete) e `kubectl delete ns ingress-nginx` (remove o LB). RDS/SQS/DynamoDB/ElastiCache podem ficar (baratos/grátis parados).
 
-## A fazer (depois do vídeo)
-- **P-008 — Relatório de entrega (.PDF ou .txt):** nomes + RM + Discord de todos (faltam os RMs de João Ciardullo, Douglas, Felipe Brito e João Gabriel), link do repositório e link do vídeo (YouTube).
+## A fazer (sem pressa)
 - **P-006 — Atualizar `GUIA-AWS.md`** (us-east-2 + 2 RDS + 1 pod + ElastiCache, em vez de 3 RDS/us-east-1). Ver F-002.
+
+## Materiais prontos para a entrega
+- `docs/ARQUITETURA.md` — arquitetura para leigos + diagrama Mermaid + decisões + 9 dificuldades.
+- `docs/apresentacao/ToggleMaster_Fase2.pptx` — apresentação do projeto.
+- Roteiro do vídeo — no chat de 2026-07-06 (e resumido no LOG).
 
 ## Achados (F-###)
 - **F-001 — Inconsistência de região** (us-east-1 vs us-east-2). ✅ RESOLVIDO (commit 498f703).

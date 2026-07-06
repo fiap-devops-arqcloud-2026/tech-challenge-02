@@ -6,6 +6,20 @@
 
 ---
 
+## 2026-07-06 (noite) — Claude (Fable 5) — VÍDEO GRAVADO 🎥 + docs de arquitetura + apresentação PPTX
+
+**Feito:**
+- **P-007 — Gabriel GRAVOU o vídeo da demo** (roteiro completo: local com docker compose, infra na nuvem, ingress, escalabilidade do evaluation e do analytics, DynamoDB e explicações da Parte 6). Falta: subir no YouTube e colocar o link no relatório.
+- **Criado `docs/ARQUITETURA.md`:** arquitetura explicada para leigos + diagrama Mermaid completo + as 7 decisões (D-001..D-007) + as 9 dificuldades enfrentadas com soluções + tabela de endpoints. É a fonte para o relatório e a apresentação.
+- **Criada a apresentação `docs/apresentacao/ToggleMaster_Fase2.pptx`** (para leigos, com diagrama e dificuldades).
+- Ambiente local havia sido validado mais cedo (9/9 healthy, ver adendo da entrada anterior).
+
+**Estado p/ o próximo agente:**
+- ⚠️ **Cluster ainda LIGADO** (2 nós c7i-flex.large + LB ≈ US$0,19/h). Gabriel gravou; **perguntar se já pode derrubar** (node group scale 0/delete + `kubectl delete ns ingress-nginx`).
+- Falta: **subir o vídeo no YouTube** → **P-008 relatório** (.PDF/.txt: nomes + RM + Discord — faltam RMs de João Ciardullo, Douglas, Felipe Brito e João Gabriel — link do repo e link do vídeo) → P-006 (GUIA-AWS.md).
+
+---
+
 ## 2026-07-06 — Claude (Fable 5) — DEPLOY COMPLETO: node group, EBS CSI, Nginx Ingress, secrets e aplicação no ar 🎉
 
 **Feito (node group pelo console com Gabriel; resto via CLI pelo Claude):**
