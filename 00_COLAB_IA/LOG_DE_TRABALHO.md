@@ -6,6 +6,18 @@
 
 ---
 
+## 2026-07-06 (noite, 3ª parte) — Claude (Fable 5) — CLUSTER DERRUBADO + RMs oficiais + rascunho do relatório + roteiro versionado
+
+**Feito:**
+- **Cluster DERRUBADO** (Gabriel confirmou o fim da gravação): namespace `ingress-nginx` deletado (LB removido — endereço antigo morreu) e node group `workers` zerado (Min 0/Des 0/Máx 4). Ficaram de pé (custo ~zero parados): control plane, RDS ×2, ElastiCache, SQS, DynamoDB, ECR e o PVC/EBS do targeting. Instruções de religar em PENDENCIAS.
+- **RMs oficiais encontrados** no relatório da Fase 1 (`tech-challenge-01/FIAP - Tech Challenge – Fase 1 – Grupo 203.pdf`) e aplicados no README. [INCERTO] "Felipe Brito" (@Durmiand) = João Carlos da Silva Brito? Aguardando confirmação do Gabriel.
+- **Rascunho do relatório da Fase 2** criado em `docs/RELATORIO_DE_ENTREGA.md` — falta só: Discord dos 5, link do YouTube e a confirmação acima (+ badge Skills Boost opcional).
+- **Roteiro do vídeo versionado** em `docs/ROTEIRO_VIDEO.md` (com narrações e porquês — regra "X com Y porque Z" do feedback da Fase 1). Feedback da Fase 1 (nota 76,5) salvo na memória privada do Claude.
+
+**Estado p/ o próximo agente:** entrega quase fechada — falta YouTube + dados do Discord + gerar o PDF do relatório. Infra AWS dormindo, não gastando.
+
+---
+
 ## 2026-07-06 (noite, 2ª parte) — Claude (Fable 5) — Revisão de comentários do código + README/GUIA-AWS/CLAUDE.md atualizados (P-006 ✅)
 
 **Feito:**

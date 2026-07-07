@@ -31,7 +31,7 @@
 ✅ **Vídeo GRAVADO em 2026-07-06.** O que falta, na ordem:
 1. **Subir o vídeo no YouTube** (não listado serve) e guardar o link.
 2. **P-008 — Relatório de entrega (.PDF ou .txt):** ✅ RMs ENCONTRADOS (relatório oficial da Fase 1, Grupo 203, em `tech-challenge-01/FIAP - Tech Challenge – Fase 1 – Grupo 203.pdf`): Douglas Deveza dos Santos RM373827 · Gabriel Pinelli Silva RM373763 · João Carlos da Silva Brito RM371738 · João Gabriel da Cruz Sales RM372444 · João Vitor de Jesus Ciardullo RM372155. Rascunho pronto em `docs/RELATORIO_DE_ENTREGA.md`. **Falta só:** (a) usernames do Discord; (b) link do vídeo no YouTube; (c) [INCERTO] confirmar se "Felipe Brito" do README antigo = João Carlos da Silva Brito; (d) opcional: link do badge Google Cloud Skills Boost (+10 pts).
-3. ⚠️ **Derrubar o que custa** (cluster ainda LIGADO ≈ US$0,19/h): node group `workers` (Compute → Edit → Desired 0, ou delete) e `kubectl delete ns ingress-nginx` (remove o LB). RDS/SQS/DynamoDB/ElastiCache podem ficar (baratos/grátis parados).
+3. ✅ **CLUSTER DERRUBADO em 2026-07-06** (após a gravação): `ingress-nginx` deletado (Load Balancer REMOVIDO — o endereço antigo morreu) e node group `workers` zerado (Min 0 / Desired 0 / Máx 4 — instâncias terminadas). Custo por hora ≈ zero. **Para religar no futuro:** node group → Edit → Desired 2 (e Min 1) → reinstalar o ingress-nginx (`kubectl apply` do manifesto oficial, provider AWS) → `kubectl apply -f infra/k8s/ingress.yaml` → o NOVO endereço do LB sai de `kubectl get svc ingress-nginx-controller -n ingress-nginx`. Os pods do togglemaster voltam sozinhos quando os nós subirem (o disco EBS do targeting foi preservado).
 
 ## A fazer (sem pressa)
 - (vazio — P-006 concluída em 2026-07-06)
