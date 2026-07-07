@@ -125,6 +125,7 @@ app = Flask(__name__)
 
 @app.route('/health')
 def health():
+    """ Verificação de saúde — usada pelos probes do Kubernetes e do docker compose """
     return jsonify({"status": "ok"})
 
 

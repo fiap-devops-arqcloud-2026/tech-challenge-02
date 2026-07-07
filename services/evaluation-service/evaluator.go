@@ -1,25 +1,28 @@
 package main
 
 import (
-	"context" // Já está aqui
-	"crypto/sha1"
-	"encoding/binary"
-	"encoding/json"
+	"context"         // contexto exigido pelas operações do cliente Redis
+	"crypto/sha1"     // hash usado no cálculo determinístico do "bucket" do usuário
+	"encoding/binary" // converte bytes do hash em número inteiro
+	"encoding/json"   // serializa/desserializa as respostas dos serviços e o cache
 	"fmt"
-	"io/ioutil"
+	"io/ioutil" // leitura do corpo das respostas HTTP
 	"log"
 	"net/http"
-	"os" // <--- ADICIONE ESTA LINHA
-	"sync"
+	"os"   // leitura da SERVICE_API_KEY do ambiente
+	"sync" // WaitGroup para buscar flag e regra em paralelo
 	"time"
 )
 
 const (
-	// Tempo de vida do cache em segundos
+	// Tempo de vida de cada entrada no cache Redis.
+	// 30s é um equilíbrio: respostas rápidas no hot path, mas mudanças de flag
+	// demoram no máximo 30s para serem percebidas.
 	CACHE_TTL = 30 * time.Second
 )
 
-// getDecision é o wrapper principal
+// getDecision é o ponto de entrada da avaliação: junta as duas etapas
+// (buscar os dados da flag e aplicar a regra) e devolve o veredito true/false.
 func (a *App) getDecision(userID, flagName string) (bool, error) {
 	// 1. Obter os dados da flag (do cache ou dos serviços)
 	info, err := a.getCombinedFlagInfo(flagName)
@@ -35,7 +38,7 @@ func (a *App) getDecision(userID, flagName string) (bool, error) {
 func (a *App) getCombinedFlagInfo(flagName string) (*CombinedFlagInfo, error) {
 	cacheKey := fmt.Sprintf("flag_info:%s", flagName)
 
-	// <--- ADICIONE ESTA LINHA: Define o contexto para as operações do Redis
+	// Contexto exigido pela API do cliente Redis (sem prazo/cancelamento aqui)
 	ctx := context.Background()
 
 	// 1. Tentar buscar do Cache (Redis)
@@ -58,10 +61,9 @@ func (a *App) getCombinedFlagInfo(flagName string) (*CombinedFlagInfo, error) {
 		return nil, err
 	}
 
-	// 3. Salvar no Cache
+	// 3. Salvar no Cache para as próximas consultas (expira em CACHE_TTL)
 	jsonData, err := json.Marshal(info)
 	if err == nil {
-		// <--- Use o contexto definido acima
 		a.RedisClient.Set(ctx, cacheKey, jsonData, CACHE_TTL).Err()
 	}
 
@@ -104,7 +106,8 @@ func (a *App) fetchFromServices(flagName string) (*CombinedFlagInfo, error) {
 	}, nil
 }
 
-// fetchFlag (função helper)
+// fetchFlag consulta o flag-service via HTTP e devolve a definição da flag
+// (nome, descrição e se está ligada). Autentica com a SERVICE_API_KEY.
 func (a *App) fetchFlag(flagName string) (*Flag, error) {
 	url := fmt.Sprintf("%s/flags/%s", a.FlagServiceURL, flagName)
 
@@ -133,9 +136,12 @@ func (a *App) fetchFlag(flagName string) (*Flag, error) {
 	return &flag, nil
 }
 
+// fetchRule consulta o targeting-service via HTTP e devolve a regra de
+// segmentação da flag (ex.: "50% dos usuários"). Uma flag pode não ter regra —
+// nesse caso o retorno é NotFoundError, tratado como "sem segmentação".
 func (a *App) fetchRule(flagName string) (*TargetingRule, error) {
 	url := fmt.Sprintf("%s/rules/%s", a.TargetingServiceURL, flagName)
-	apiKey := os.Getenv("SERVICE_API_KEY") // Usa a mesma chave
+	apiKey := os.Getenv("SERVICE_API_KEY") // mesma chave usada no fetchFlag
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
@@ -160,27 +166,33 @@ func (a *App) fetchRule(flagName string) (*TargetingRule, error) {
 	return &rule, nil
 }
 
-// runEvaluationLogic é onde a decisão é tomada
+// runEvaluationLogic é onde a decisão é tomada, em 3 degraus:
+//  1. flag desligada (kill switch global) → false para todos;
+//  2. flag ligada e SEM regra de segmentação → true para todos;
+//  3. flag ligada COM regra → aplica a regra (ex.: porcentagem de usuários).
 func (a *App) runEvaluationLogic(info *CombinedFlagInfo, userID string) bool {
+	// Degrau 1: sem flag ou flag desligada → nega para todo mundo
 	if info.Flag == nil || !info.Flag.IsEnabled {
 		return false
 	}
 
+	// Degrau 2: sem regra (ou regra desativada) → libera para todo mundo
 	if info.Rule == nil || !info.Rule.IsEnabled {
 		return true
 	}
 
-	// 3. Processa a regra (só temos "PERCENTAGE" por enquanto)
+	// Degrau 3: processa a regra (só temos o tipo "PERCENTAGE" por enquanto)
 	rule := info.Rule.Rules
 	if rule.Type == "PERCENTAGE" {
-		// Converte o 'value' (que é interface{}) para float64
+		// O 'value' chega como interface{} (JSON genérico); números JSON viram float64
 		percentage, ok := rule.Value.(float64)
 		if !ok {
 			log.Printf("Erro: valor da regra de porcentagem não é um número para a flag '%s'", info.Flag.Name)
 			return false
 		}
 
-		// Calcula o "bucket" do usuário (0-99)
+		// Sorteia o usuário em um "balde" fixo de 0 a 99.
+		// Ex.: regra de 50% → usuários nos baldes 0–49 recebem true.
 		userBucket := getDeterministicBucket(userID + info.Flag.Name)
 
 		if float64(userBucket) < percentage {
@@ -188,18 +200,22 @@ func (a *App) runEvaluationLogic(info *CombinedFlagInfo, userID string) bool {
 		}
 	}
 
+	// Tipo de regra desconhecido ou usuário fora da porcentagem → false
 	return false
 }
 
+// getDeterministicBucket transforma uma string (userID + flagName) em um número
+// de 0 a 99 SEMPRE IGUAL para a mesma entrada. É isso que garante que o mesmo
+// usuário receba sempre a mesma resposta para a mesma flag (sem sorteio aleatório).
 func getDeterministicBucket(input string) int {
-	// Usamos SHA1 (rápido) e pegamos os primeiros 4 bytes
+	// SHA-1 é usado só como "espalhador" rápido e uniforme (não é uso criptográfico)
 	hasher := sha1.New()
 	hasher.Write([]byte(input))
 	hash := hasher.Sum(nil)
 
-	// Converte 4 bytes para um uint32
+	// Converte os 4 primeiros bytes do hash em um número inteiro
 	val := binary.BigEndian.Uint32(hash[:4])
 
-	// Retorna o módulo 100
+	// Módulo 100 → resultado sempre entre 0 e 99
 	return int(val % 100)
 }

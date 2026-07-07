@@ -6,6 +6,22 @@
 
 ---
 
+## 2026-07-06 (noite, 2ª parte) — Claude (Fable 5) — Revisão de comentários do código + README/GUIA-AWS/CLAUDE.md atualizados (P-006 ✅)
+
+**Feito:**
+- **Revisão de comentários em TODO o código** (regra do Gabriel: tudo comentado):
+  - `evaluation-service/evaluator.go`: removidos comentários de rascunho ("<--- ADICIONE ESTA LINHA" etc.); comentadas as funções `fetchRule`, `getDeterministicBucket` e os 3 degraus da `runEvaluationLogic`; explicado o porquê do CACHE_TTL de 30s.
+  - `evaluation-service/handlers.go`: comentários de propósito em `EvaluationResponse`, `healthHandler` e `evaluationHandler` (hot path).
+  - `auth-service/{main,handlers,key}.go`: imports mortos comentados substituídos por explicações reais (driver pgx via `_`, uso do crypto etc.).
+  - 3 serviços Python: docstring nos `health()`. Dockerfiles, SQLs, manifestos e docker-compose JÁ estavam bem comentados (auditados, sem mudança).
+- **README.md atualizado:** targeting agora documentado como pod (com o porquê), tabela de infra 2 RDS + 1 pod, seção de deploy com região/cluster corretos (us-east-2, `togglemaster-cluster`), passo do postgres-targeting no kubectl apply, nota sobre secrets versionados (repo-laboratório), árvore de pastas com docs/ e postgres-targeting/.
+- **P-006 ✅ — GUIA-AWS.md atualizado:** us-east-2 em todo o arquivo; seção RDS reescrita (2 instâncias + pod do targeting); seção do cluster reescrita com o passo a passo REAL pelo console (control plane + node group c7i-flex.large + EBS CSI/gp2 default) mantendo eksctl como alternativa; teardown reescrito (LB + node group primeiro; RDS targeting removido). F-002 RESOLVIDO.
+- **CLAUDE.md atualizado:** estado real (deploy completo, vídeo gravado), política de segredos do repo-laboratório, aviso do GUIA-AWS trocado.
+
+**Estado p/ o próximo agente:** igual à entrada anterior — falta YouTube + relatório (P-008) e decidir derrubar o cluster.
+
+---
+
 ## 2026-07-06 (noite) — Claude (Fable 5) — VÍDEO GRAVADO 🎥 + docs de arquitetura + apresentação PPTX
 
 **Feito:**

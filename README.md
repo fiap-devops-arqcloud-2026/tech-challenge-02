@@ -101,9 +101,11 @@ O sistema é composto por **5 microsserviços independentes** que se comunicam e
 |---|---|---|---|
 | auth-service | `auth_db` | PostgreSQL (RDS) | Armazena hashes das chaves de API |
 | flag-service | `flags_db` | PostgreSQL (RDS) | Definições das feature flags |
-| targeting-service | `targeting_db` | PostgreSQL (RDS) | Regras de segmentação |
+| targeting-service | `targeting_db` | PostgreSQL (**pod no EKS** + disco EBS) | Regras de segmentação |
 | evaluation-service | — | Redis (ElastiCache) | Cache de 30s para respostas ultra-rápidas |
 | analytics-service | `ToggleMasterAnalytics` | DynamoDB | Histórico de avaliações |
+
+> 💡 **Por que o targeting não usa RDS?** O plano gratuito da AWS limita a conta a 2 instâncias RDS. O banco do targeting roda como um pod PostgreSQL dentro do cluster ([infra/k8s/postgres-targeting/](./infra/k8s/postgres-targeting/)) — solução aprovada pelo professor. Detalhes em [docs/ARQUITETURA.md](./docs/ARQUITETURA.md).
 
 ---
 
@@ -368,6 +370,12 @@ tech-challenge-02/
 │   ├── 📂 evaluation-service/      # ⚡ Go — avaliação em tempo real (hot path)
 │   └── 📂 analytics-service/       # 📊 Python — worker SQS → DynamoDB
 │
+├── 📂 docs/
+│   ├── 📄 ARQUITETURA.md           # 🏛️ Arquitetura, decisões e dificuldades (com diagrama)
+│   └── 📂 apresentacao/            # 🎨 Apresentação do projeto (.pptx)
+│
+├── 📂 00_COLAB_IA/                 # 🤝 Contexto de colaboração (log, pendências, decisões)
+│
 └── 📂 infra/
     ├── 📂 postgres-app/            # Script de inicialização do banco local
     └── 📂 k8s/                     # ☸️ Manifests Kubernetes para o AWS EKS
@@ -375,6 +383,7 @@ tech-challenge-02/
         ├── 📂 auth-service/        # Secret, ConfigMap, Deployment, Service
         ├── 📂 flag-service/        # Secret, ConfigMap, Deployment, Service
         ├── 📂 targeting-service/   # Secret, ConfigMap, Deployment, Service
+        ├── 📂 postgres-targeting/  # 🐘 Banco do targeting como pod (StatefulSet + EBS)
         ├── 📂 evaluation-service/  # Secret, ConfigMap, Deployment, Service, HPA
         ├── 📂 analytics-service/   # Secret, ConfigMap, Deployment, Service, HPA
         └── 📄 ingress.yaml         # Roteamento externo via Nginx
@@ -384,15 +393,18 @@ tech-challenge-02/
 
 ## ☸️ Deploy na AWS (Kubernetes)
 
-Os manifests Kubernetes para deploy no AWS EKS estão em [`infra/k8s/`](./infra/k8s/).
+> ✅ **O deploy foi realizado em 2026-07-06** — os 5 microsserviços rodaram em produção no cluster EKS `togglemaster-cluster` (região **us-east-2/Ohio**), com escalabilidade demonstrada no vídeo da entrega. A arquitetura completa, as decisões e as dificuldades estão documentadas em [docs/ARQUITETURA.md](./docs/ARQUITETURA.md).
 
-### Infraestrutura necessária na AWS
+Os manifests Kubernetes estão em [`infra/k8s/`](./infra/k8s/).
+
+### Infraestrutura utilizada na AWS
 
 | Recurso | Serviço AWS | Para quê |
 |---|---|---|
-| Cluster Kubernetes | EKS | Orquestrar os containers |
+| Cluster Kubernetes | EKS (2 nós c7i-flex.large, auto scaling 1–4) | Orquestrar os containers |
 | 5 repositórios de imagem | ECR | Armazenar as imagens Docker |
-| 3 bancos de dados | RDS (PostgreSQL) | auth, flag e targeting services |
+| 2 bancos de dados | RDS (PostgreSQL) | auth e flag services |
+| 1 banco em pod | PostgreSQL no EKS + disco EBS | targeting service (limite de 2 RDS no plano gratuito) |
 | Cache em memória | ElastiCache (Redis) | evaluation-service |
 | Banco NoSQL | DynamoDB | analytics-service |
 | Fila de mensagens | SQS | Comunicação evaluation → analytics |
@@ -400,27 +412,32 @@ Os manifests Kubernetes para deploy no AWS EKS estão em [`infra/k8s/`](./infra/
 ### Aplicando os manifests
 
 ```bash
-# 1. Conecte seu kubectl ao cluster EKS
-aws eks update-kubeconfig --region us-east-1 --name seu-cluster
+# 1. Conecte seu kubectl ao cluster EKS (região us-east-2)
+aws eks update-kubeconfig --region us-east-2 --name togglemaster-cluster
 
 # 2. Crie o namespace
 kubectl apply -f infra/k8s/00-namespaces.yaml
 
-# 3. Aplique os recursos de cada serviço
+# 3. Suba primeiro o banco do targeting (pod com disco EBS)
+kubectl apply -f infra/k8s/postgres-targeting/
+
+# 4. Aplique os recursos de cada serviço
 kubectl apply -f infra/k8s/auth-service/
 kubectl apply -f infra/k8s/flag-service/
 kubectl apply -f infra/k8s/targeting-service/
 kubectl apply -f infra/k8s/evaluation-service/
 kubectl apply -f infra/k8s/analytics-service/
 
-# 4. Configure o Ingress
+# 5. Configure o Ingress (cria o Load Balancer público)
 kubectl apply -f infra/k8s/ingress.yaml
 
-# 5. Verifique se os pods estão rodando
+# 6. Verifique se os pods estão rodando
 kubectl get pods -n togglemaster
 ```
 
-> ⚠️ **Antes de aplicar:** preencha os valores `<PLACEHOLDER>` nos arquivos `secret.yaml` e `configmap.yaml` com os dados reais da sua infraestrutura AWS. Consulte o [.env.example](./.env.example) para referência de quais valores são necessários.
+> ℹ️ **Pré-requisitos no cluster:** EBS CSI Driver (para o disco do pod targeting), Metrics Server (para os HPAs) e Nginx Ingress Controller. O passo a passo completo — incluindo a criação do cluster e do node group pelo console — está no [GUIA-AWS.md](./GUIA-AWS.md).
+>
+> ⚠️ **Sobre os secrets:** este repositório é **privado** e usado como laboratório da disciplina — os `secret.yaml` estão preenchidos com os valores reais do ambiente de demonstração. Num projeto real, secrets **nunca** são versionados.
 
 ---
 

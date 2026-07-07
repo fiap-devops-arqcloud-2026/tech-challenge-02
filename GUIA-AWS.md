@@ -1,10 +1,11 @@
 # ☁️ Guia de Deploy na AWS — ToggleMaster
 
-> ⚠️ **ATENÇÃO — ESTE GUIA ESTÁ PARCIALMENTE DESATUALIZADO.**
-> Ele descreve o plano inicial: **3 instâncias RDS** e região **us-east-1**. A arquitetura mudou para:
-> **2 RDS** (auth, flags) + **targeting como pod no EKS** + **ElastiCache** (Redis), tudo em **us-east-2 (Ohio)**.
-> A **fonte da verdade atual** é a pasta `00_COLAB_IA/` (DOSSIE / PENDENCIAS / DECISOES).
-> A atualização completa deste guia é a pendência **P-006**.
+> ✅ **GUIA ATUALIZADO EM 2026-07-06** para refletir o deploy que foi **realmente executado**:
+> região **us-east-2 (Ohio)** · **2 RDS** (auth, flags) + **targeting como pod no EKS** (limite de
+> 2 RDS do plano gratuito) · ElastiCache, SQS e DynamoDB · cluster criado pelo **console**
+> (não eksctl) com nós **c7i-flex.large** (o plano gratuito bloqueia a t3.medium).
+> A arquitetura completa com diagrama está em [`docs/ARQUITETURA.md`](./docs/ARQUITETURA.md);
+> o histórico de decisões, em `00_COLAB_IA/DECISOES.md`.
 
 > **Para quem é este guia?** Para qualquer pessoa que queira colocar o ToggleMaster rodando na AWS, mesmo sem experiência prévia com cloud.
 >
@@ -135,7 +136,7 @@ Preencha as perguntas:
 ```
 AWS Access Key ID:     → cole seu Access Key ID
 AWS Secret Access Key: → cole seu Secret Access Key
-Default region name:   → us-east-1
+Default region name:   → us-east-2
 Default output format: → json
 ```
 
@@ -157,21 +158,21 @@ Deve retornar um JSON com `"Account"`, `"UserId"` e `"Arn"`. Se aparecer, está 
 
 ### 4.1 Criar os 5 repositórios
 
-Execute cada comando (substitua `us-east-1` pela sua região se for diferente):
+Execute cada comando (substitua `us-east-2` pela sua região se for diferente):
 
 ```powershell
-aws ecr create-repository --repository-name auth-service       --region us-east-1
-aws ecr create-repository --repository-name flag-service       --region us-east-1
-aws ecr create-repository --repository-name targeting-service  --region us-east-1
-aws ecr create-repository --repository-name evaluation-service --region us-east-1
-aws ecr create-repository --repository-name analytics-service  --region us-east-1
+aws ecr create-repository --repository-name auth-service       --region us-east-2
+aws ecr create-repository --repository-name flag-service       --region us-east-2
+aws ecr create-repository --repository-name targeting-service  --region us-east-2
+aws ecr create-repository --repository-name evaluation-service --region us-east-2
+aws ecr create-repository --repository-name analytics-service  --region us-east-2
 ```
 
 ### 4.2 Autenticar o Docker com o ECR
 
 ```powershell
-# Substitua 123456789012 pelo seu Account ID e us-east-1 pela sua região
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.us-east-1.amazonaws.com
+# Substitua 123456789012 pelo seu Account ID e us-east-2 pela sua região
+aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.us-east-2.amazonaws.com
 ```
 
 Deve aparecer: `Login Succeeded` ✅
@@ -188,21 +189,21 @@ docker compose build
 ```powershell
 # Substitua 123456789012 pelo seu Account ID
 
-docker tag tech-challenge-02-auth-service:latest       123456789012.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
-docker tag tech-challenge-02-flag-service:latest       123456789012.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
-docker tag tech-challenge-02-targeting-service:latest  123456789012.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
-docker tag tech-challenge-02-evaluation-service:latest 123456789012.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
-docker tag tech-challenge-02-analytics-service:latest  123456789012.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
+docker tag tech-challenge-02-auth-service:latest       123456789012.dkr.ecr.us-east-2.amazonaws.com/auth-service:latest
+docker tag tech-challenge-02-flag-service:latest       123456789012.dkr.ecr.us-east-2.amazonaws.com/flag-service:latest
+docker tag tech-challenge-02-targeting-service:latest  123456789012.dkr.ecr.us-east-2.amazonaws.com/targeting-service:latest
+docker tag tech-challenge-02-evaluation-service:latest 123456789012.dkr.ecr.us-east-2.amazonaws.com/evaluation-service:latest
+docker tag tech-challenge-02-analytics-service:latest  123456789012.dkr.ecr.us-east-2.amazonaws.com/analytics-service:latest
 ```
 
 ### 4.5 Enviar as imagens para o ECR
 
 ```powershell
-docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
-docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
-docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
-docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
-docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
+docker push 123456789012.dkr.ecr.us-east-2.amazonaws.com/auth-service:latest
+docker push 123456789012.dkr.ecr.us-east-2.amazonaws.com/flag-service:latest
+docker push 123456789012.dkr.ecr.us-east-2.amazonaws.com/targeting-service:latest
+docker push 123456789012.dkr.ecr.us-east-2.amazonaws.com/evaluation-service:latest
+docker push 123456789012.dkr.ecr.us-east-2.amazonaws.com/analytics-service:latest
 ```
 
 > O upload pode demorar alguns minutos dependendo da sua internet.
@@ -213,11 +214,11 @@ Abra cada arquivo abaixo e substitua o campo `image:` pela URL real:
 
 | Arquivo | Valor do campo `image:` |
 |---|---|
-| `infra/k8s/auth-service/deployment.yaml` | `123456789012.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest` |
-| `infra/k8s/flag-service/deployment.yaml` | `123456789012.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest` |
-| `infra/k8s/targeting-service/deployment.yaml` | `123456789012.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest` |
-| `infra/k8s/evaluation-service/deployment.yaml` | `123456789012.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest` |
-| `infra/k8s/analytics-service/deployment.yaml` | `123456789012.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest` |
+| `infra/k8s/auth-service/deployment.yaml` | `123456789012.dkr.ecr.us-east-2.amazonaws.com/auth-service:latest` |
+| `infra/k8s/flag-service/deployment.yaml` | `123456789012.dkr.ecr.us-east-2.amazonaws.com/flag-service:latest` |
+| `infra/k8s/targeting-service/deployment.yaml` | `123456789012.dkr.ecr.us-east-2.amazonaws.com/targeting-service:latest` |
+| `infra/k8s/evaluation-service/deployment.yaml` | `123456789012.dkr.ecr.us-east-2.amazonaws.com/evaluation-service:latest` |
+| `infra/k8s/analytics-service/deployment.yaml` | `123456789012.dkr.ecr.us-east-2.amazonaws.com/analytics-service:latest` |
 
 ---
 
@@ -225,9 +226,12 @@ Abra cada arquivo abaixo e substitua o campo `image:` pela URL real:
 
 > **O que é RDS?** É o "banco de dados gerenciado" da AWS — você não precisa instalar ou manter o PostgreSQL. A Amazon cuida de tudo.
 
-> ⚠️ **Dica de custo:** O Free Tier cobre 750h/mês de `db.t3.micro`. Crie os 3 bancos e deixe rodando apenas durante o período do desafio.
+> ⚠️ **Limite do plano gratuito:** a conta só permite **2 instâncias RDS** simultâneas — a 3ª falha
+> com "maximum number of instances available with free plan accounts". Por isso, criamos **2 RDS**
+> (auth e flags) e o banco do **targeting roda como pod dentro do EKS**
+> (manifestos em `infra/k8s/postgres-targeting/`, com disco EBS persistente). Solução aprovada pelo professor (D-001).
 
-Você vai criar **3 instâncias RDS**, uma para cada serviço. O processo é o mesmo para as 3 — repita os passos abaixo mudando apenas o nome.
+Você vai criar **2 instâncias RDS**. O processo é o mesmo para as 2 — repita os passos abaixo mudando apenas o nome.
 
 ### Para cada banco de dados:
 
@@ -237,17 +241,21 @@ Você vai criar **3 instâncias RDS**, uma para cada serviço. O processo é o m
 4. Em **Mecanismo**, selecione **PostgreSQL**
 5. Em **Modelos**, selecione **Nível gratuito** (Free Tier)
 
-### Configurações (repita 3 vezes com os nomes abaixo):
+### Configurações (repita 2 vezes com os nomes abaixo):
 
-| Campo | Banco 1 (auth) | Banco 2 (flags) | Banco 3 (targeting) |
-|---|---|---|---|
-| Identificador da instância | `togglemaster-auth` | `togglemaster-flags` | `togglemaster-targeting` |
-| Nome do banco inicial | `auth_db` | `flags_db` | `targeting_db` |
-| Nome de usuário | `toggle` | `toggle` | `toggle` |
-| Senha | Escolha uma senha forte | Mesma senha | Mesma senha |
-| Classe da instância | `db.t3.micro` | `db.t3.micro` | `db.t3.micro` |
-| Armazenamento | 20 GB (mínimo) | 20 GB | 20 GB |
-| Acesso público | **Sim** (para testes) | **Sim** | **Sim** |
+| Campo | Banco 1 (auth) | Banco 2 (flags) |
+|---|---|---|
+| Identificador da instância | `togglemaster-auth` | `togglemaster-flags` |
+| Nome do banco inicial | `auth_db` | `flags_db` |
+| Nome de usuário | `toggle` | `toggle` |
+| Senha | Escolha uma senha forte | Mesma senha |
+| Classe da instância | `db.t3.micro` | `db.t3.micro` |
+| Armazenamento | 20 GB (mínimo) | 20 GB |
+| Acesso público | **Sim** (para testes) | **Sim** |
+
+> 🐘 **E o targeting_db?** Não é criado aqui — ele sobe junto com o deploy no Kubernetes
+> (`kubectl apply -f infra/k8s/postgres-targeting/`), depois que o cluster e o EBS CSI Driver
+> existirem. O serviço de targeting acessa esse banco pelo endereço interno `postgres-targeting:5432`.
 
 6. Em **Grupos de segurança VPC**, anote qual VPC e security group foram usados (você precisará do mesmo para o EKS)
 7. Clique em **Criar banco de dados**
@@ -257,14 +265,17 @@ Você vai criar **3 instâncias RDS**, uma para cada serviço. O processo é o m
 
 Após criar cada banco, clique nele e copie o **Endpoint**. Será algo como:
 ```
-togglemaster-auth.abc123xyz.us-east-1.rds.amazonaws.com
+togglemaster-auth.abc123xyz.us-east-2.rds.amazonaws.com
 ```
 
 Salve no seu `.env`:
 ```env
-AUTH_DATABASE_URL=postgres://toggle:SuaSenha@togglemaster-auth.abc123xyz.us-east-1.rds.amazonaws.com:5432/auth_db
-FLAGS_DATABASE_URL=postgres://toggle:SuaSenha@togglemaster-flags.abc123xyz.us-east-1.rds.amazonaws.com:5432/flags_db
-TARGETING_DATABASE_URL=postgres://toggle:SuaSenha@togglemaster-targeting.abc123xyz.us-east-1.rds.amazonaws.com:5432/targeting_db
+AUTH_DATABASE_URL=postgres://toggle:SuaSenha@togglemaster-auth.abc123xyz.us-east-2.rds.amazonaws.com:5432/auth_db
+FLAGS_DATABASE_URL=postgres://toggle:SuaSenha@togglemaster-flags.abc123xyz.us-east-2.rds.amazonaws.com:5432/flags_db
+
+# O targeting NÃO usa RDS: o banco roda como pod no cluster.
+# No secret do Kubernetes, a URL aponta para o Service interno:
+TARGETING_DATABASE_URL=postgres://toggle:SuaSenha@postgres-targeting:5432/targeting_db
 ```
 
 ---
@@ -322,7 +333,7 @@ REDIS_URL=redis://togglemaster-redis.abc123.cache.amazonaws.com:6379
 Confirme no `.env`:
 ```env
 AWS_DYNAMODB_TABLE=ToggleMasterAnalytics
-AWS_REGION=us-east-1
+AWS_REGION=us-east-2
 ```
 
 ---
@@ -346,12 +357,12 @@ AWS_REGION=us-east-1
 3. Clique em **Criar fila**
 4. Copie a **URL** da fila — será algo como:
 ```
-https://sqs.us-east-1.amazonaws.com/123456789012/togglemaster-events
+https://sqs.us-east-2.amazonaws.com/123456789012/togglemaster-events
 ```
 
 Salve no `.env`:
 ```env
-AWS_SQS_URL=https://sqs.us-east-1.amazonaws.com/123456789012/togglemaster-events
+AWS_SQS_URL=https://sqs.us-east-2.amazonaws.com/123456789012/togglemaster-events
 ```
 
 ---
@@ -362,14 +373,28 @@ AWS_SQS_URL=https://sqs.us-east-1.amazonaws.com/123456789012/togglemaster-events
 
 > ⚠️ **Atenção ao custo:** O cluster EKS cobra **~R$0,55/hora** pelo control plane, independente de estar sendo usado. Crie **somente quando for fazer o deploy e gravar o vídeo**.
 
-### Criar o cluster com eksctl (método recomendado):
+### Como foi feito de verdade: pelo console (em 2 etapas)
+
+> ℹ️ No deploy real (2026-06-29 e 2026-07-06), o cluster foi criado pelo **console AWS**, não pelo eksctl:
+>
+> 1. **Control plane:** EKS → Create cluster → nome `togglemaster-cluster`, K8s 1.30, endpoint
+>    "Public and private", role `togglemaster-eks-cluster-role`. Add-ons marcados: CoreDNS,
+>    kube-proxy, VPC CNI, **EKS Pod Identity Agent** e **Metrics Server** (já cobre o HPA).
+> 2. **Node group:** aba Compute → Add node group → nome `workers`, role `togglemaster-eks-node-role`,
+>    Amazon Linux 2023, **c7i-flex.large** (⚠️ o plano gratuito BLOQUEIA t3.medium — "not eligible
+>    for Free Tier"), disco 20 GiB, Min 1 / Desejado 2 / Máx 4, nas 2 sub-redes públicas.
+> 3. **EBS CSI Driver:** aba Add-ons → Amazon EBS CSI Driver → criar a role via Pod Identity.
+>    Depois, marcar a StorageClass `gp2` como padrão:
+>    `kubectl patch storageclass gp2 -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'`
+
+### Alternativa: criar com eksctl (um comando só)
 
 ```powershell
 eksctl create cluster `
   --name togglemaster-cluster `
-  --region us-east-1 `
+  --region us-east-2 `
   --nodegroup-name workers `
-  --node-type t3.small `
+  --node-type c7i-flex.large `
   --nodes 2 `
   --nodes-min 1 `
   --nodes-max 4 `
@@ -378,12 +403,10 @@ eksctl create cluster `
 
 > Este comando cria o cluster E os servidores (nós) automaticamente. Demora cerca de **15–20 minutos**.
 
-Quando terminar, você verá: `EKS cluster "togglemaster-cluster" in "us-east-1" region is ready`
-
 ### Conectar o kubectl ao cluster:
 
 ```powershell
-aws eks update-kubeconfig --region us-east-1 --name togglemaster-cluster
+aws eks update-kubeconfig --region us-east-2 --name togglemaster-cluster
 ```
 
 ### Verificar conexão:
@@ -434,7 +457,7 @@ kubectl get service ingress-nginx-controller -n ingress-nginx
 
 Aguarde até aparecer um endereço no campo `EXTERNAL-IP`. Será algo como:
 ```
-abc123.us-east-1.elb.amazonaws.com
+abc123.us-east-2.elb.amazonaws.com
 ```
 
 > 📝 **Anote este endereço** — ele é a URL pública do seu sistema!
@@ -475,7 +498,7 @@ Abra e preencha os valores reais nos arquivos `configmap.yaml`:
 | Arquivo | Campo | Valor |
 |---|---|---|
 | `evaluation-service/configmap.yaml` | `REDIS_URL` | `redis://SEU_ENDPOINT_ELASTICACHE:6379` |
-| `analytics-service/configmap.yaml` | `AWS_REGION` | `us-east-1` |
+| `analytics-service/configmap.yaml` | `AWS_REGION` | `us-east-2` |
 
 ### 11.3 Aplicar todos os manifests
 
@@ -595,25 +618,33 @@ kubectl get ingress -n togglemaster
 
 Para não gastar dinheiro com infraestrutura parada, derrube tudo depois de gravar o vídeo:
 
+O que custa dinheiro **parado** é: os nós EC2 do node group (~US$ 0,17/h com 2× c7i-flex.large) e o
+Load Balancer do Nginx (~US$ 0,02/h). O resto (RDS db.t3.micro, SQS, DynamoDB, ElastiCache t3.micro,
+ECR, o control plane que o Free Tier cobre) é grátis ou quase grátis — pode deixar.
+
 ```powershell
-# 1. Deletar o cluster EKS (e todos os recursos dentro dele)
-eksctl delete cluster --name togglemaster-cluster --region us-east-1
+# 1. Remover o Nginx Ingress (isso APAGA o Load Balancer público)
+kubectl delete namespace ingress-nginx
 
-# 2. Deletar os bancos RDS (pelo console AWS ou com AWS CLI)
-aws rds delete-db-instance --db-instance-identifier togglemaster-auth      --skip-final-snapshot --region us-east-1
-aws rds delete-db-instance --db-instance-identifier togglemaster-flags     --skip-final-snapshot --region us-east-1
-aws rds delete-db-instance --db-instance-identifier togglemaster-targeting --skip-final-snapshot --region us-east-1
+# 2. Zerar as máquinas do node group (console: cluster -> Compute -> workers -> Edit -> Desired 0)
+#    Ou deletar o node group de vez. O control plane pode ficar (coberto pelo Free Tier).
 
-# 3. Deletar o ElastiCache
-aws elasticache delete-replication-group --replication-group-id togglemaster-redis --region us-east-1
+# 3. (Opcional, fim do projeto) Deletar os bancos RDS
+aws rds delete-db-instance --db-instance-identifier togglemaster-auth  --skip-final-snapshot --region us-east-2
+aws rds delete-db-instance --db-instance-identifier togglemaster-flags --skip-final-snapshot --region us-east-2
 
-# 4. Deletar a fila SQS (substitua pelo ARN da sua fila)
-aws sqs delete-queue --queue-url https://sqs.us-east-1.amazonaws.com/123456789012/togglemaster-events
+# 4. (Opcional, fim do projeto) Deletar o ElastiCache
+aws elasticache delete-replication-group --replication-group-id togglemaster-redis --region us-east-2
 
-# 5. As imagens no ECR e a tabela DynamoDB ficam no Free Tier — pode deixar
+# 5. (Opcional, fim do projeto) Deletar a fila SQS
+aws sqs delete-queue --queue-url https://sqs.us-east-2.amazonaws.com/891376952395/togglemaster-events
+
+# 6. As imagens no ECR e a tabela DynamoDB ficam no Free Tier — pode deixar
 ```
 
-> 💡 **Dica:** O comando `eksctl delete cluster` já cuida do Load Balancer e dos nodes EC2 automaticamente.
+> 💡 **Para religar a demo depois:** volte o Desired do node group para 2, reaplique o Nginx Ingress
+> (`kubectl apply` do manifesto oficial) e rode `kubectl apply -f infra/k8s/ingress.yaml`.
+> Atenção: o endereço do Load Balancer MUDA a cada recriação.
 
 ---
 
@@ -628,7 +659,7 @@ Guarde estes valores conforme for criando cada recurso:
 | Account ID | `123456789012` | `AWS_ACCOUNT_ID` |
 | RDS auth endpoint | `togglemaster-auth.xxx.rds.amazonaws.com` | `AUTH_DATABASE_URL` |
 | RDS flags endpoint | `togglemaster-flags.xxx.rds.amazonaws.com` | `FLAGS_DATABASE_URL` |
-| RDS targeting endpoint | `togglemaster-targeting.xxx.rds.amazonaws.com` | `TARGETING_DATABASE_URL` |
+| Banco do targeting (pod) | `postgres-targeting:5432` (Service interno do cluster) | `TARGETING_DATABASE_URL` |
 | ElastiCache endpoint | `togglemaster-redis.xxx.cache.amazonaws.com` | `REDIS_URL` |
-| SQS URL | `https://sqs.us-east-1.amazonaws.com/xxx/togglemaster-events` | `AWS_SQS_URL` |
-| Load Balancer DNS | `abc123.us-east-1.elb.amazonaws.com` | URL pública do sistema |
+| SQS URL | `https://sqs.us-east-2.amazonaws.com/xxx/togglemaster-events` | `AWS_SQS_URL` |
+| Load Balancer DNS | `abc123.us-east-2.elb.amazonaws.com` | URL pública do sistema |

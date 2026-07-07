@@ -34,7 +34,7 @@
 3. ⚠️ **Derrubar o que custa** (cluster ainda LIGADO ≈ US$0,19/h): node group `workers` (Compute → Edit → Desired 0, ou delete) e `kubectl delete ns ingress-nginx` (remove o LB). RDS/SQS/DynamoDB/ElastiCache podem ficar (baratos/grátis parados).
 
 ## A fazer (sem pressa)
-- **P-006 — Atualizar `GUIA-AWS.md`** (us-east-2 + 2 RDS + 1 pod + ElastiCache, em vez de 3 RDS/us-east-1). Ver F-002.
+- (vazio — P-006 concluída em 2026-07-06)
 
 ## Materiais prontos para a entrega
 - `docs/ARQUITETURA.md` — arquitetura para leigos + diagrama Mermaid + decisões + 9 dificuldades.
@@ -43,7 +43,7 @@
 
 ## Achados (F-###)
 - **F-001 — Inconsistência de região** (us-east-1 vs us-east-2). ✅ RESOLVIDO (commit 498f703).
-- **F-002 — `GUIA-AWS.md` desatualizado** (3 RDS, us-east-1). Pendente (P-006); tem aviso no topo do arquivo.
+- **F-002 — `GUIA-AWS.md` desatualizado** (3 RDS, us-east-1). ✅ RESOLVIDO em 2026-07-06 (P-006): guia atualizado para us-east-2, 2 RDS + targeting como pod, nós c7i-flex.large, seções de criação pelo console e de teardown reescritas.
 - **F-003 — VPC em 2 AZs.** ✅ RESOLVIDO em 2026-06-29: ao auditar as sub-redes, descobrimos que o VPC já tinha sub-redes em us-east-2a **e** us-east-2b (4 no total). O dossiê antigo estava incompleto (só listava as de 2a). Mapa correto no DOSSIE §4.
 
 ## Comandos prontos: EBS CSI Driver (alternativa por linha de comando)

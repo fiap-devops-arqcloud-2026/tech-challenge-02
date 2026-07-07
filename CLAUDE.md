@@ -15,8 +15,8 @@
 - **ToggleMaster:** sistema de feature flags, 5 microsserviços, indo para **AWS EKS**.
 - **Ambiente:** conta pessoal AWS, Free Tier, região **us-east-2 (Ohio)**, Account `891376952395`.
 - **Bancos:** `auth_db` e `flags_db` no RDS; `targeting_db` como **pod** no EKS (`infra/k8s/postgres-targeting/`).
-- **Estado (2026-06-28):** toda a infra gerenciada criada (RDS, DynamoDB, SQS, ElastiCache). **Próxima tarefa: criar o cluster EKS** (PENDENCIAS P-004) — ⚠️ exige criar antes uma sub-rede em us-east-2b (só há AZ us-east-2a).
-- IDs reais da AWS: `00_COLAB_IA/DOSSIE_CONTEXTO.md` §4.
+- **Estado (2026-07-06):** ✅ **DEPLOY COMPLETO E VÍDEO GRAVADO** — cluster EKS + node group (2× c7i-flex.large) + aplicação no ar, verificada ponta a ponta. Falta: subir o vídeo no YouTube + relatório (P-008). ⚠️ O cluster pode estar LIGADO (~US$0,19/h) — conferir PENDENCIAS.
+- IDs reais da AWS: `00_COLAB_IA/DOSSIE_CONTEXTO.md` §4. Arquitetura, decisões e dificuldades: `docs/ARQUITETURA.md`.
 
 ## 📌 Regras de trabalho (do Gabriel)
 - Idioma **pt-BR**; explicar simples primeiro, depois técnico; conciso. Gabriel **não** é técnico da área.
@@ -29,9 +29,8 @@
 O repo do GitHub é **privado** e a `00_COLAB_IA/` é **versionada** — código e contexto viajam juntos (D-005).
 - Ao começar numa máquina: `git pull`.
 - Ao terminar: `git push`.
-- Segredos (senha dos bancos, credenciais AWS) **não** são versionados — pedir ao Gabriel.
 
 ## ⚠️ Cuidados
-- Nunca commitar segredos (os secrets têm placeholders; preencher só no deploy).
+- **Sobre segredos:** por decisão do Gabriel, este repo **privado** é tratado como laboratório — os `infra/k8s/*/secret.yaml` e o `.env` estão versionados COM os valores reais (assim as 2 máquinas sincronizam). Num projeto real, isso jamais seria feito.
 - Região SEMPRE `us-east-2` e Account `891376952395`.
-- `GUIA-AWS.md` está **desatualizado** (descreve 3 RDS/us-east-1) — confie na `00_COLAB_IA/`, não nele (P-006).
+- `GUIA-AWS.md` foi **atualizado em 2026-07-06** (P-006 ✅): us-east-2, 2 RDS + targeting como pod, nós c7i-flex.large. Em caso de conflito, a `00_COLAB_IA/` é a fonte da verdade.
