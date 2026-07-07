@@ -1,6 +1,6 @@
 # FIAP — Tech Challenge – Fase 2 – Grupo 203
 
-> **RASCUNHO** — vira o PDF final quando os campos ⏳ forem preenchidos.
+> **RASCUNHO** — falta apenas o link do vídeo no YouTube para virar o PDF final.
 > Exigências do PDF da Fase 2 (pág. 9): participantes (nome, RM, Discord), link do repositório e link do vídeo.
 
 ## Participantes
@@ -8,10 +8,10 @@
 | Nome | RM | Discord |
 |---|---|---|
 | Douglas Deveza dos Santos | RM373827 | d0guera |
-| Gabriel Pinelli Silva | RM373763 | ⏳ (falta o do Gabriel) |
+| Gabriel Pinelli Silva | RM373763 | tocaccelly |
 | João Carlos da Silva Brito | RM371738 | durmiand |
 | João Gabriel da Cruz Sales | RM372444 | jgabrieldev |
-| João Vitor de Jesus Ciardullo | RM372155 | joaozinho1403 ⚠️ (confirmar) |
+| João Vitor de Jesus Ciardullo | RM372155 | joaozinho1403 |
 
 ## Links
 
