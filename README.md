@@ -445,13 +445,15 @@ kubectl get pods -n togglemaster
 
 Projeto desenvolvido para a **Fase 2 do Tech Challenge** da pós-graduação em **DevOps e Arquitetura Cloud** — POSTECH FIAP.
 
+**Grupo 203** — RMs conforme o relatório oficial da Fase 1:
+
 | Integrante | RM | GitHub |
 |---|---|---|
-| Gabriel Silva | RM373763 | [@Tocaccelli](https://github.com/Tocaccelli) |
-| João Ciardullo | — | [@joaociardullo](https://github.com/joaociardullo) |
-| Douglas | — | [@Douglasdeveza](https://github.com/Douglasdeveza) |
-| Felipe Brito | — | [@Durmiand](https://github.com/Durmiand) |
-| João Gabriel | — | [@jgabrieldev1](https://github.com/jgabrieldev1) |
+| Gabriel Pinelli Silva | RM373763 | [@Tocaccelli](https://github.com/Tocaccelli) |
+| João Vitor de Jesus Ciardullo | RM372155 | [@joaociardullo](https://github.com/joaociardullo) |
+| Douglas Deveza dos Santos | RM373827 | [@Douglasdeveza](https://github.com/Douglasdeveza) |
+| João Carlos da Silva Brito | RM371738 | [@Durmiand](https://github.com/Durmiand) |
+| João Gabriel da Cruz Sales | RM372444 | [@jgabrieldev1](https://github.com/jgabrieldev1) |
 
 ---
 

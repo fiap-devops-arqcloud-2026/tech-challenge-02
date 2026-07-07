@@ -30,7 +30,7 @@
 ## ⏭️ PRÓXIMA TAREFA — Fechar a entrega (P-008)
 ✅ **Vídeo GRAVADO em 2026-07-06.** O que falta, na ordem:
 1. **Subir o vídeo no YouTube** (não listado serve) e guardar o link.
-2. **P-008 — Relatório de entrega (.PDF ou .txt):** nomes + RM + usernames do Discord de todos (**faltam os RMs de João Ciardullo, Douglas, Felipe Brito e João Gabriel**), link do repositório e link do vídeo. Base pronta: `docs/ARQUITETURA.md` (arquitetura, decisões e dificuldades já escritas).
+2. **P-008 — Relatório de entrega (.PDF ou .txt):** ✅ RMs ENCONTRADOS (relatório oficial da Fase 1, Grupo 203, em `tech-challenge-01/FIAP - Tech Challenge – Fase 1 – Grupo 203.pdf`): Douglas Deveza dos Santos RM373827 · Gabriel Pinelli Silva RM373763 · João Carlos da Silva Brito RM371738 · João Gabriel da Cruz Sales RM372444 · João Vitor de Jesus Ciardullo RM372155. Rascunho pronto em `docs/RELATORIO_DE_ENTREGA.md`. **Falta só:** (a) usernames do Discord; (b) link do vídeo no YouTube; (c) [INCERTO] confirmar se "Felipe Brito" do README antigo = João Carlos da Silva Brito; (d) opcional: link do badge Google Cloud Skills Boost (+10 pts).
 3. ⚠️ **Derrubar o que custa** (cluster ainda LIGADO ≈ US$0,19/h): node group `workers` (Compute → Edit → Desired 0, ou delete) e `kubectl delete ns ingress-nginx` (remove o LB). RDS/SQS/DynamoDB/ElastiCache podem ficar (baratos/grátis parados).
 
 ## A fazer (sem pressa)
