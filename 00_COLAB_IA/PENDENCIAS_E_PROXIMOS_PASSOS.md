@@ -30,7 +30,7 @@
 ## ⏭️ PRÓXIMA TAREFA — Fechar a entrega (P-008)
 ✅ **Vídeo GRAVADO em 2026-07-06.** O que falta, na ordem:
 1. **Subir o vídeo no YouTube** (não listado serve) e guardar o link.
-2. **P-008 — Relatório de entrega (.PDF ou .txt):** rascunho COMPLETO em `docs/RELATORIO_DE_ENTREGA.md` — todos os 5 Discords confirmados (tocaccelly, joaozinho1403 ✅ confirmado como João Vitor, d0guera, durmiand, jgabrieldev). **Falta SÓ o link do vídeo no YouTube** (Gabriel está subindo) → daí gerar o PDF final e entregar. Badge Skills Boost: grupo ainda não tem (opcional).
+2. **P-008 — Relatório de entrega:** ✅ **PDF GERADO** em `docs/FIAP - Tech Challenge - Fase 2 - Grupo 203.pdf` (todos os 5 Discords confirmados), porém **com placeholder no lugar do link do vídeo** (upload em andamento). **ÚLTIMO PASSO DA FASE 2:** quando o vídeo subir no YouTube → colocar o link no `docs/RELATORIO_DE_ENTREGA.md` → regerar o PDF → enviar à FIAP. Badge Skills Boost: grupo ainda não tem (opcional).
 3. ✅ **CLUSTER DERRUBADO em 2026-07-06** (após a gravação): `ingress-nginx` deletado (Load Balancer REMOVIDO — o endereço antigo morreu) e node group `workers` zerado (Min 0 / Desired 0 / Máx 4 — instâncias terminadas). Custo por hora ≈ zero. **Para religar no futuro:** node group → Edit → Desired 2 (e Min 1) → reinstalar o ingress-nginx (`kubectl apply` do manifesto oficial, provider AWS) → `kubectl apply -f infra/k8s/ingress.yaml` → o NOVO endereço do LB sai de `kubectl get svc ingress-nginx-controller -n ingress-nginx`. Os pods do togglemaster voltam sozinhos quando os nós subirem (o disco EBS do targeting foi preservado).
 
 ## A fazer (sem pressa)

@@ -1,6 +1,8 @@
 # FIAP — Tech Challenge – Fase 2 – Grupo 203
 
-> **RASCUNHO** — falta apenas o link do vídeo no YouTube para virar o PDF final.
+> **Fonte do PDF de entrega** (`FIAP - Tech Challenge - Fase 2 - Grupo 203.pdf`, nesta pasta).
+> ⚠️ O PDF foi gerado SEM o link do vídeo (upload em andamento) — quando o link chegar,
+> atualizar AQUI e REGERAR o PDF antes de enviar à FIAP.
 > Exigências do PDF da Fase 2 (pág. 9): participantes (nome, RM, Discord), link do repositório e link do vídeo.
 
 ## Participantes
