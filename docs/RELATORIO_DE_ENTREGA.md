@@ -7,17 +7,17 @@
 
 | Nome | RM | Discord |
 |---|---|---|
-| Douglas Deveza dos Santos | RM373827 | ⏳ |
-| Gabriel Pinelli Silva | RM373763 | ⏳ |
-| João Carlos da Silva Brito | RM371738 | ⏳ |
-| João Gabriel da Cruz Sales | RM372444 | ⏳ |
-| João Vitor de Jesus Ciardullo | RM372155 | ⏳ |
+| Douglas Deveza dos Santos | RM373827 | d0guera |
+| Gabriel Pinelli Silva | RM373763 | ⏳ (falta o do Gabriel) |
+| João Carlos da Silva Brito | RM371738 | durmiand |
+| João Gabriel da Cruz Sales | RM372444 | jgabrieldev |
+| João Vitor de Jesus Ciardullo | RM372155 | joaozinho1403 ⚠️ (confirmar) |
 
 ## Links
 
 - **Repositório:** https://github.com/fiap-devops-arqcloud-2026/tech-challenge-02
 - **Vídeo da demonstração:** ⏳ (YouTube)
-- **Pontuação extra (opcional):** ⏳ link do perfil/badge público do Google Cloud Skills Boost, se houver
+- **Pontuação extra (opcional):** o grupo ainda não concluiu a trilha do Google Cloud Skills Boost — se alguém concluir antes do prazo, incluir aqui o link do badge público (+10 pts)
 
 ## Resumo dos desafios encontrados e decisões tomadas
 
