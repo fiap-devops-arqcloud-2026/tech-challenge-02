@@ -2,9 +2,80 @@
 
 > **TL;DR:** Diário de sessões. Nunca apagar/reescrever entradas antigas — só acrescentar no topo. A cada ~5 entradas, resumir as antigas no DOSSIE e manter só as 5 recentes aqui.
 >
-> **Última atualização:** 2026-07-06 — Claude (Fable 5)
+> **Última atualização:** 2026-07-08 — Codex
 
 ---
+
+## 2026-07-08 13:43 (BRT) — Codex — Chave IAM desativada + publicação solicitada
+
+**Feito:** Gabriel confirmou que a chave IAM antiga foi desativada, mas ainda não excluída.
+Revisado o estado Git completo para commit e push da branch `dev`, incluindo os arquivos
+adicionados pelo usuário (`AGENTS.md` e o PDF de teste do relatório).
+
+**Decisões/Por quê:** publicar primeiro em `dev`. A branch padrão atual é `dev`; um PR
+`dev → main` é recomendado antes do merge porque as branches possuem históricos divergentes.
+
+**Arquivos:** todo o escopo já registrado nas entradas anteriores, mais a confirmação em
+`PENDENCIAS_E_PROXIMOS_PASSOS.md`.
+
+**Descobertas:** `main` possui 3 commits ausentes em `dev`, enquanto `dev` possui 20
+commits ausentes em `main`. Não há PR aberto de `dev` para `main`.
+
+**Estado p/ o próximo agente:** commit e push autorizados para `dev`. PR/merge em `main`
+não autorizado nesta etapa; aguardar decisão do Gabriel após o push.
+
+## 2026-07-08 13:36 (BRT) — Codex — Binário removido + PostgreSQL esclarecido
+
+**Feito:** removido `services/auth-service/auth-service.exe` (artefato local de build,
+desnecessário para Docker/EKS) e adicionada a regra `*.exe` ao `.gitignore`. O README agora
+explica que o Compose sobe 2 containers PostgreSQL, mas eles hospedam 3 bancos lógicos:
+`auth_db`, `flags_db` e `targeting_db`.
+
+**Decisões/Por quê:** nenhuma decisão arquitetural nova. O arranjo local continua atendendo
+ao enunciado: 2 instâncias/containers PostgreSQL; a separação lógica mantém 3 bancos.
+
+**Arquivos:** `.gitignore`, `README.md`, `services/auth-service/auth-service.exe` (removido)
+e `00_COLAB_IA/LOG_DE_TRABALHO.md`.
+
+**Descobertas:** o binário não participava do build Docker; cada Dockerfile Go recompila o
+serviço para Linux. A aparente diferença de “2 versus 3 bancos” era apenas terminológica.
+
+**Estado p/ o próximo agente:** alteração concluída; manter P-009 como próximo passo externo
+(excluir definitivamente a chave IAM antiga antes de publicar).
+
+## 2026-07-08 13:20 (BRT) — Codex — README reproduzível + credenciais atuais removidas
+
+**Feito:**
+- Reproduzido o problema em ambiente limpo: 9 containers saudáveis, mas `/evaluate`
+  retornava HTTP 502 porque a `SERVICE_API_KEY` antiga não existia no banco novo.
+- README atualizado com o processo correto: copiar `.env.example`, subir o Compose,
+  criar uma chave no `auth-service`, preencher o `.env`, recriar o
+  `evaluation-service` e testar flag/regra/avaliação/cache.
+- Documentado que o SQS e o worker do analytics ficam desativados localmente; o fluxo
+  SQS→DynamoDB é demonstrado apenas na AWS.
+- `.env` removido do controle do Git sem apagar a cópia local e incluído no
+  `.gitignore`. `.env.example` ficou somente com valores locais e chave inicialmente vazia.
+- Os 6 `infra/k8s/*/secret.yaml` foram convertidos para modelos `stringData` com placeholders.
+- Valores de credenciais foram redigidos do LOG/PENDENCIAS e a política pública foi
+  espelhada em README, CLAUDE/AGENTS, DOSSIE, DECISOES e documentos de organização.
+
+**Decisões/Por quê:** D-008 — preparar o estado atual para publicação sem reescrever o
+histórico, conforme decisão do Gabriel. Credenciais recuperáveis em commits antigos nunca
+podem ser reutilizadas; a chave IAM antiga deve ser desativada antes de publicar (P-009).
+
+**Arquivos:** `.gitignore`, `.env.example`, `README.md`, `CLAUDE.md`, `AGENTS.md`,
+`services/{auth-service,flag-service,evaluation-service}/README.md`, `infra/k8s/*/secret.yaml`,
+`docs/ARQUITETURA.md` e `00_COLAB_IA/*`.
+
+**Descobertas:** padrões de credenciais reais no estado atual versionável = 0. Manifestos
+Secret passaram em `kubectl create --dry-run=client`. Teste limpo final: 9 containers,
+5 health checks HTTP 200, chave criada, flag/regra criadas, avaliação `result:true` e
+dois registros confirmando SQS desativado. Os RDS de laboratório já haviam sido excluídos,
+conforme informado pelo Gabriel.
+
+**Estado p/ o próximo agente:** saneamento local concluído. Próximo passo obrigatório =
+Gabriel desativar/excluir a chave IAM antiga no console AWS (P-009); depois revisar o diff,
+commitar e publicar apenas quando solicitado. O histórico não foi limpo por decisão explícita.
 
 ## 2026-07-06 (noite, 3ª parte) — Claude (Fable 5) — CLUSTER DERRUBADO + RMs oficiais + rascunho do relatório + roteiro versionado
 
@@ -55,7 +126,9 @@
 - **P-004c — EBS CSI Driver** instalado (add-on via console, role via Pod Identity).
 - **Permissões do `togglemaster-deploy`:** o usuário não tinha acesso EKS. Adicionada inline policy `eks-access` (`eks:*`) + **access entry** no cluster com `AmazonEKSClusterAdminPolicy`. `kubectl` conectado (`aws eks update-kubeconfig`).
 - **P-004d — Nginx Ingress Controller v1.15.1** instalado (`kubectl apply`, provider AWS). LB público: `a4e86e3f9b5564375bcbe8c46ad4acee-fc7302f5c0e6e08e.elb.us-east-2.amazonaws.com`.
-- **P-005 — Secrets preenchidos e DEPLOY FEITO.** Todos os 6 `secret.yaml` com valores reais (versionados, lab autorizado). `MASTER_KEY` de produção: `tm-master-5lQ76l3nYa7LVlDd5w1vTECmYKoxZjR`. `SERVICE_API_KEY` real criada via `POST /admin/keys` e aplicada no evaluation.
+- **P-005 — Secrets preenchidos e DEPLOY FEITO.** Na execução original, os 6
+  `secret.yaml` receberam valores do laboratório. Esses valores foram redigidos em
+  2026-07-08 e não devem ser reutilizados; consultar D-008/P-009.
 - **Consertos no caminho:**
   - StorageClass `gp2` não era default → PVC do targeting ficou Pending → marcada como default + PVC recriado.
   - SG `sg-06ca599ca5e54eb7d` (RDS) sem regra 5432 → liberado para 10.0.0.0/16.
@@ -64,7 +137,9 @@
 
 **Adendo (mesma sessão) — ambiente LOCAL validado para o vídeo:**
 - `docker compose up` falhou na 1ª tentativa: o `infra/postgres-app/01-init-multi-db.sh` estava com **CRLF** (quebra de linha Windows) → `/bin/sh^M: bad interpreter` no contêiner → `targeting_db` não era criado. **Consertado:** script convertido para LF + regras `*.sh`/`*.sql text eol=lf` no `.gitattributes` (⚠️ na outra máquina, após o `git pull`, o arquivo já vem certo).
-- Recriado do zero (`docker compose down -v && up -d`): **9/9 contêineres healthy**. Testado ponta a ponta local: chave criada via MASTER_KEY local (`admin-secreto-123`), flag `demo-local` criada e avaliada com `result:true`. `SERVICE_API_KEY` local nova salva no `.env` (a antiga morreu com o volume).
+- Recriado do zero (`docker compose down -v && up -d`): **9/9 contêineres healthy**.
+  Testado ponta a ponta local com uma chave de demonstração, flag `demo-local` criada e
+  avaliada com `result:true`. A chave local deixou de valer quando o volume foi removido.
 - Contêineres locais parados com `docker compose down` (SEM `-v` — os volumes ficam, então no dia do vídeo basta `docker compose up -d` que tudo volta funcionando).
 
 **Estado p/ o próximo agente:**

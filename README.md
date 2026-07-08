@@ -190,7 +190,9 @@ Copy-Item .env.example .env
 cp .env.example .env
 ```
 
-> O `.env.example` já vem com todos os valores configurados para o ambiente local. Não é necessário alterar nada para rodar.
+O `.env.example` contém somente valores próprios para o laboratório local. A variável
+`SERVICE_API_KEY` começa vazia de propósito: essa chave precisa ser criada no banco novo
+do `auth-service` depois da primeira inicialização.
 
 ### 3. Suba todos os containers
 
@@ -199,8 +201,14 @@ docker compose up --build -d
 ```
 
 Esse comando vai:
+
 - Construir as imagens dos 5 serviços
-- Subir os 4 bancos de dados (2× PostgreSQL, Redis, DynamoDB Local)
+- Subir os 4 containers de armazenamento:
+  - 2 containers PostgreSQL, que hospedam 3 bancos lógicos:
+    - `auth_db` no container `postgres-auth`;
+    - `flags_db` e `targeting_db` no container `postgres-app`;
+  - 1 Redis;
+  - 1 DynamoDB Local.
 - Iniciar os 5 microsserviços
 - Criar e configurar os bancos automaticamente
 
@@ -247,6 +255,62 @@ curl http://localhost:8005/health
 
 Todos devem responder: `{"status":"ok"}`
 
+### 6. Crie a chave usada pelo evaluation-service
+
+O `evaluation-service` precisa de uma chave cadastrada no `auth-service` para consultar
+as flags e as regras. Uma chave copiada de outra máquina não funciona em um banco local
+recém-criado.
+
+**Windows (PowerShell):**
+
+```powershell
+# Cria uma chave no banco local usando a MASTER_KEY definida no .env.example.
+$resposta = Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8001/admin/keys" `
+  -Headers @{ Authorization = "Bearer local-master-key-change-me" } `
+  -ContentType "application/json" `
+  -Body (@{ name = "evaluation-local" } | ConvertTo-Json -Compress)
+
+# Mostra a chave criada. Copie todo o valor iniciado por tm_key_.
+$resposta.key
+```
+
+**Linux/macOS:**
+
+```bash
+# A resposta JSON contém a chave no campo "key".
+curl -s -X POST http://localhost:8001/admin/keys \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer local-master-key-change-me" \
+  -d '{"name":"evaluation-local"}'
+```
+
+Abra o arquivo `.env` e preencha a variável com a chave retornada:
+
+```dotenv
+SERVICE_API_KEY=tm_key_COLE_A_CHAVE_GERADA_AQUI
+```
+
+> A chave acima é apenas um exemplo de formato. Não copie esse texto literalmente.
+
+### 7. Recrie o evaluation-service
+
+O Docker lê as variáveis do `.env` quando cria o container. Depois de salvar a chave,
+recrie somente o serviço de avaliação:
+
+```bash
+docker compose up -d --force-recreate evaluation-service
+```
+
+Confirme que ele voltou a ficar saudável:
+
+```bash
+docker compose ps evaluation-service
+```
+
+Agora o ambiente está pronto para o teste funcional.
+
 ### Comandos úteis
 
 ```bash
@@ -270,57 +334,75 @@ docker compose restart evaluation-service
 
 ## 🧪 Testando o Sistema
 
-Após subir o ambiente, siga este roteiro para testar o fluxo completo:
+Use a mesma chave `tm_key_...` criada na preparação do ambiente.
 
-### Passo 1 — Criar uma chave de API
+### Passo 1 — Guarde a chave em uma variável
 
-```bash
-# Windows (PowerShell):
-curl.exe -X POST http://localhost:8001/admin/keys `
-  -H "Content-Type: application/json" `
-  -H "Authorization: Bearer admin-secreto-123" `
-  -d '{\"name\": \"minha-chave\"}'
+**Windows (PowerShell):**
 
-# Linux/Mac:
-curl -X POST http://localhost:8001/admin/keys \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer admin-secreto-123" \
-  -d '{"name": "minha-chave"}'
+```powershell
+# Substitua pelo valor real criado no passo anterior.
+$CHAVE = "tm_key_COLE_A_CHAVE_GERADA_AQUI"
 ```
 
-Guarde o valor de `"key"` retornado (ex: `tm_key_abc123...`). Você vai usar nos próximos passos.
+**Linux/macOS:**
+
+```bash
+# Substitua pelo valor real criado no passo anterior.
+CHAVE="tm_key_COLE_A_CHAVE_GERADA_AQUI"
+```
 
 ### Passo 2 — Criar uma feature flag
 
+**Windows (PowerShell):**
+
+```powershell
+# Cadastra uma flag ligada no flag-service.
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8002/flags" `
+  -Headers @{ Authorization = "Bearer $CHAVE" } `
+  -ContentType "application/json" `
+  -Body (@{
+    name = "novo-dashboard"
+    description = "Ativa o novo dashboard"
+    is_enabled = $true
+  } | ConvertTo-Json -Compress)
+```
+
+**Linux/macOS:**
+
 ```bash
-# Substitua SUA_CHAVE pelo valor retornado no passo anterior
-
-# Windows (PowerShell):
-curl.exe -X POST http://localhost:8002/flags `
-  -H "Content-Type: application/json" `
-  -H "Authorization: Bearer SUA_CHAVE" `
-  -d '{\"name\": \"novo-dashboard\", \"description\": \"Ativa o novo dashboard\", \"is_enabled\": true}'
-
-# Linux/Mac:
 curl -X POST http://localhost:8002/flags \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer SUA_CHAVE" \
+  -H "Authorization: Bearer $CHAVE" \
   -d '{"name": "novo-dashboard", "description": "Ativa o novo dashboard", "is_enabled": true}'
 ```
 
 ### Passo 3 — Criar uma regra de segmentação (50% dos usuários)
 
-```bash
-# Windows (PowerShell):
-curl.exe -X POST http://localhost:8003/rules `
-  -H "Content-Type: application/json" `
-  -H "Authorization: Bearer SUA_CHAVE" `
-  -d '{\"flag_name\": \"novo-dashboard\", \"is_enabled\": true, \"rules\": {\"type\": \"PERCENTAGE\", \"value\": 50}}'
+**Windows (PowerShell):**
 
-# Linux/Mac:
+```powershell
+# Define que a flag será liberada para 50% dos usuários.
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8003/rules" `
+  -Headers @{ Authorization = "Bearer $CHAVE" } `
+  -ContentType "application/json" `
+  -Body (@{
+    flag_name = "novo-dashboard"
+    is_enabled = $true
+    rules = @{ type = "PERCENTAGE"; value = 50 }
+  } | ConvertTo-Json -Depth 4 -Compress)
+```
+
+**Linux/macOS:**
+
+```bash
 curl -X POST http://localhost:8003/rules \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer SUA_CHAVE" \
+  -H "Authorization: Bearer $CHAVE" \
   -d '{"flag_name": "novo-dashboard", "is_enabled": true, "rules": {"type": "PERCENTAGE", "value": 50}}'
 ```
 
@@ -328,10 +410,12 @@ curl -X POST http://localhost:8003/rules \
 
 ```bash
 # Avalia para vários usuários (alguns recebem true, outros false — é esperado!)
-curl.exe "http://localhost:8004/evaluate?user_id=usuario-1&flag_name=novo-dashboard"
-curl.exe "http://localhost:8004/evaluate?user_id=usuario-2&flag_name=novo-dashboard"
-curl.exe "http://localhost:8004/evaluate?user_id=usuario-3&flag_name=novo-dashboard"
+curl "http://localhost:8004/evaluate?user_id=usuario-1&flag_name=novo-dashboard"
+curl "http://localhost:8004/evaluate?user_id=usuario-2&flag_name=novo-dashboard"
+curl "http://localhost:8004/evaluate?user_id=usuario-3&flag_name=novo-dashboard"
 ```
+
+No Windows, use `curl.exe` no lugar de `curl` se o PowerShell tratar o comando como alias.
 
 Respostas esperadas (exemplo):
 ```json
@@ -351,6 +435,29 @@ docker compose logs evaluation-service --tail=5
 ```
 
 Na segunda chamada você verá `Cache HIT` — significa que o Redis respondeu sem consultar os outros serviços, tornando a resposta muito mais rápida.
+
+### SQS e analytics no ambiente local
+
+O SQS fica **desativado de propósito** no Docker Compose. Os campos `AWS_SQS_URL` do
+`evaluation-service` e do `analytics-service` recebem uma string vazia, portanto:
+
+- o `evaluation-service` calcula a resposta normalmente, mas apenas registra no log que o envio ao SQS está desativado;
+- o worker SQS do `analytics-service` não é iniciado;
+- o container DynamoDB Local sobe para compor o ambiente exigido pelo desafio, mas não recebe automaticamente os eventos de avaliação;
+- o fluxo completo `evaluation → SQS → analytics → DynamoDB` deve ser demonstrado no ambiente AWS.
+
+Essa separação evita que uma pessoa precise de conta ou credenciais AWS para testar as
+flags, as regras, a avaliação e o cache Redis localmente.
+
+### Solução de problemas
+
+- **`/evaluate` retorna HTTP 502 e os logs mostram HTTP 401:** a `SERVICE_API_KEY` do
+  `.env` não existe no banco atual. Crie outra chave, atualize o `.env` e execute
+  `docker compose up -d --force-recreate evaluation-service`.
+- **Você executou `docker compose down -v`:** os bancos foram apagados. Gere outra chave
+  antes de testar novamente.
+- **Alguma porta já está em uso:** altere as portas no `.env` ou encerre o programa que
+  utiliza as portas 8000–8005, 5433, 5434 ou 6379.
 
 ---
 
@@ -437,7 +544,9 @@ kubectl get pods -n togglemaster
 
 > ℹ️ **Pré-requisitos no cluster:** EBS CSI Driver (para o disco do pod targeting), Metrics Server (para os HPAs) e Nginx Ingress Controller. O passo a passo completo — incluindo a criação do cluster e do node group pelo console — está no [GUIA-AWS.md](./GUIA-AWS.md).
 >
-> ⚠️ **Sobre os secrets:** este repositório é **privado** e usado como laboratório da disciplina — os `secret.yaml` estão preenchidos com os valores reais do ambiente de demonstração. Num projeto real, secrets **nunca** são versionados.
+> ⚠️ **Sobre os secrets:** os arquivos `infra/k8s/*/secret.yaml` contêm somente
+> placeholders. Preencha-os localmente antes do deploy e nunca envie os valores reais
+> ao Git. Base64 é apenas codificação e não protege uma credencial publicada.
 
 ---
 

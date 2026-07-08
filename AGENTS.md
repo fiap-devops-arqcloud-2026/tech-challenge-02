@@ -1,6 +1,6 @@
-# CLAUDE.md — ToggleMaster (Tech Challenge Fase 2, FIAP)
+# AGENTS.md — ToggleMaster (Tech Challenge Fase 2, FIAP)
 
-> Este arquivo é lido **automaticamente** pelo Claude Code ao abrir o projeto (e serve de guia para o Codex).
+> Este arquivo é lido **automaticamente** pelo Codex ao abrir o projeto (e serve de guia para o Codex).
 > Ele aponta para o contexto completo e resume as regras essenciais — funciona em qualquer máquina.
 
 ## ⚡ Comece por aqui (qualquer notebook)

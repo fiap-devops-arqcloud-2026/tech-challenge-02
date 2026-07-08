@@ -7,7 +7,7 @@
 ## Por que esta pasta existe
 O dono do projeto (Gabriel) alterna entre agentes (Claude e Codex) e entre 2 notebooks (trabalho + pessoal). O próximo agente/máquina precisa CONTINUAR sem retrabalho e sem reperguntar o que já se sabe. Por isso documentamos, datamos e organizamos aqui.
 
-> ✅ **Esta pasta é VERSIONADA no Git** (repo privado — decisão D-005, 2026-06-28). Ela sincroniza entre as máquinas via `git pull`/`push`, junto com o código. (Até 2026-06-25 ficava fora do Git; isso mudou.)
+> ✅ **Esta pasta é VERSIONADA no Git** (decisão D-005, 2026-06-28). Ela sincroniza entre as máquinas via `git pull`/`push`, junto com o código. Como o repositório pode ser público, nenhum segredo pode ser registrado aqui (D-008).
 
 ## Ordem de leitura ao iniciar uma sessão
 1. `git pull` (pegar a última versão)

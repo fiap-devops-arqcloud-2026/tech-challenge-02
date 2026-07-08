@@ -1,8 +1,10 @@
 # PENDÊNCIAS E PRÓXIMOS PASSOS
 
-> **TL;DR:** Backlog priorizado (P-###) e achados (F-###). **A APLICAÇÃO ESTÁ NO AR na AWS (deploy completo e verificado em 2026-07-06).** LB público: `a4e86e3f9b5564375bcbe8c46ad4acee-fc7302f5c0e6e08e.elb.us-east-2.amazonaws.com`. **PRÓXIMA TAREFA: gravar o vídeo (P-007)** — roteiro no chat de 2026-07-06. ⚠️ Cluster LIGADO (~US$0,19/h); derrubar após a gravação.
+> **TL;DR:** Deploy e vídeo concluídos em 2026-07-06; node group e Load Balancer
+> desligados, e os RDS de laboratório foram excluídos. O repositório foi saneado no estado
+> atual em 2026-07-08. **Antes de publicar:** desativar a chave IAM antiga e concluir P-009.
 >
-> **Última atualização:** 2026-07-06 — Claude (Fable 5).
+> **Última atualização:** 2026-07-08 — Codex.
 
 ## Concluído
 
@@ -11,7 +13,9 @@
 - ✅ **P-004c — EBS CSI Driver** (add-on, Pod Identity). StorageClass `gp2` marcada como default.
 - ✅ **P-004d — Nginx Ingress v1.15.1**. LB: `a4e86e3f9b5564375bcbe8c46ad4acee-fc7302f5c0e6e08e.elb.us-east-2.amazonaws.com`.
 - ✅ **kubectl conectado** (usuário `togglemaster-deploy` ganhou policy `eks:*` + access entry admin no cluster).
-- ✅ **P-005 — Secrets preenchidos (valores reais versionados) e deploy feito.** 6 pods Running. `SERVICE_API_KEY` real no `evaluation-service/secret.yaml`; `MASTER_KEY` = `tm-master-5lQ76l3nYa7LVlDd5w1vTECmYKoxZjR`. Consertos: SG do RDS (5432), `init.sql` do auth e do flags rodados nos RDS.
+- ✅ **P-005 — Deploy de demonstração concluído.** Os valores usados naquela execução
+  foram removidos do estado atual do repositório em 2026-07-08 e não devem ser reutilizados.
+  Consertos históricos: SG do RDS (5432), `init.sql` do auth e do flags rodados nos RDS.
 - ✅ **Verificado ponta a ponta:** flags via LB público, evento SQS→analytics→DynamoDB (1 item), HPAs lendo CPU.
 
 ### 2026-06-29 (via console AWS)
@@ -32,6 +36,18 @@
 1. **Subir o vídeo no YouTube** (não listado serve) e guardar o link.
 2. **P-008 — Relatório de entrega:** ✅ **PDF GERADO** em `docs/FIAP - Tech Challenge - Fase 2 - Grupo 203.pdf` (todos os 5 Discords confirmados), porém **com placeholder no lugar do link do vídeo** (upload em andamento). **ÚLTIMO PASSO DA FASE 2:** quando o vídeo subir no YouTube → colocar o link no `docs/RELATORIO_DE_ENTREGA.md` → regerar o PDF → enviar à FIAP. Badge Skills Boost: grupo ainda não tem (opcional).
 3. ✅ **CLUSTER DERRUBADO em 2026-07-06** (após a gravação): `ingress-nginx` deletado (Load Balancer REMOVIDO — o endereço antigo morreu) e node group `workers` zerado (Min 0 / Desired 0 / Máx 4 — instâncias terminadas). Custo por hora ≈ zero. **Para religar no futuro:** node group → Edit → Desired 2 (e Min 1) → reinstalar o ingress-nginx (`kubectl apply` do manifesto oficial, provider AWS) → `kubectl apply -f infra/k8s/ingress.yaml` → o NOVO endereço do LB sai de `kubectl get svc ingress-nginx-controller -n ingress-nginx`. Os pods do togglemaster voltam sozinhos quando os nós subirem (o disco EBS do targeting foi preservado).
+
+## 🔴 Antes de tornar o repositório público (P-009)
+1. ✅ **Chave IAM antiga desativada em 2026-07-08.** A exclusão definitiva continua
+   recomendada antes de tornar o repositório público, pois uma chave apenas desativada pode
+   ser reativada.
+2. Confirmar que nenhum serviço futuro reutilizará credenciais recuperáveis no histórico Git.
+3. Revisar o consentimento dos integrantes para exposição pública de nomes, RMs e Discords.
+4. Fazer um clone limpo e repetir o roteiro local atualizado do README.
+
+> **Risco aceito — D-008:** o histórico Git não será reescrito por decisão do Gabriel em
+> 2026-07-08. Mesmo após o saneamento atual, commits antigos continuam contendo os valores
+> anteriores. A publicação só é aceitável depois que a chave IAM antiga estiver inválida.
 
 ## A fazer (sem pressa)
 - (vazio — P-006 concluída em 2026-07-06)
@@ -63,13 +79,13 @@ eksctl create addon --name aws-ebs-csi-driver --cluster togglemaster-cluster --r
   --service-account-role-arn arn:aws:iam::891376952395:role/AmazonEKS_EBS_CSI_DriverRole --force
 ```
 
-## Checklist: secrets/configmaps a preencher antes do deploy (detalhe de P-005)
-Todos os secrets têm placeholders. Região us-east-2. Usuário dos bancos: `toggle`. **A senha dos bancos e a chave IAM já são conhecidas** (memória privada do Claude — NÃO versionar os valores aqui).
-- `auth-service/secret.yaml` → `DATABASE_URL` = postgres://toggle:SENHA@<endpoint-rds-auth>:5432/auth_db · `MASTER_KEY` = (master key de produção)
-- `flag-service/secret.yaml` → `DATABASE_URL` = postgres://toggle:SENHA@<endpoint-rds-flags>:5432/flags_db
-- `targeting-service/secret.yaml` → `DATABASE_URL` = postgres://toggle:SENHA@**postgres-targeting**:5432/targeting_db (aponta para o POD, não RDS)
-- `postgres-targeting/secret.yaml` → `POSTGRES_PASSWORD` = a mesma senha (este usa **stringData**, texto puro — sem Base64)
-- `evaluation-service/secret.yaml` → `SERVICE_API_KEY` (criar em produção) · `AWS_SQS_URL` = https://sqs.us-east-2.amazonaws.com/891376952395/togglemaster-events · `AWS_ACCESS_KEY_ID` · `AWS_SECRET_ACCESS_KEY`
-- `analytics-service/secret.yaml` → `AWS_SQS_URL` (mesma URL) · `AWS_ACCESS_KEY_ID` · `AWS_SECRET_ACCESS_KEY`
-- `evaluation-service/configmap.yaml` → `REDIS_URL` ✅ JÁ PREENCHIDO (`redis://togglemaster-redis.ewbn3x.ng.0001.use2.cache.amazonaws.com:6379`)
-> Secrets em `data:` precisam de Base64 (PowerShell: `[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("valor"))`). Exceção: `postgres-targeting/secret.yaml` usa `stringData` (texto puro).
+## Checklist: Secrets para um eventual novo deploy
+Todos os manifestos usam `stringData` com placeholders públicos. Preencha os valores
+somente na cópia local e nunca comite o arquivo preenchido.
+- `auth-service/secret.yaml` → nova `DATABASE_URL` e nova `MASTER_KEY`.
+- `flag-service/secret.yaml` → nova `DATABASE_URL`.
+- `targeting-service/secret.yaml` e `postgres-targeting/secret.yaml` → mesma senha nova.
+- `evaluation-service/secret.yaml` → nova `SERVICE_API_KEY`, URL da nova fila SQS e
+  credencial temporária ou IAM de menor privilégio.
+- `analytics-service/secret.yaml` → mesma fila e credencial temporária ou IAM de menor privilégio.
+- Preferência futura: IAM Role/Pod Identity em vez de chaves AWS estáticas.

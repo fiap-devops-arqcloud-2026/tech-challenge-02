@@ -26,4 +26,7 @@ tech-challenge-02/
 - Versões antigas vão para `_ARQUIVO_MORTO/` (nunca excluir sem permissão).
 
 ## Observação importante
-A pasta `00_COLAB_IA/` agora é **versionada no Git** (decisão D-005, 2026-06-28, repo privado). Sincroniza entre os 2 notebooks do Gabriel via `git pull`/`push`, junto com o código. Segredos (senhas, credenciais AWS) continuam FORA do Git.
+A pasta `00_COLAB_IA/` é **versionada no Git** (decisão D-005, 2026-06-28).
+Sincroniza entre os 2 notebooks via `git pull`/`push`, junto com o código. Como o
+repositório pode ser público, segredos, senhas e credenciais AWS devem ficar FORA do Git
+(D-008).

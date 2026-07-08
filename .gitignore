@@ -1,4 +1,12 @@
 
+# Variáveis locais e credenciais — use apenas o modelo .env.example
+.env
+.env.*
+!.env.example
+
 # Bytecode do Python (gerado automaticamente, nunca versionar)
 __pycache__/
 *.pyc
+
+# Binários locais gerados durante builds manuais
+*.exe

@@ -2,7 +2,7 @@
 
 > **TL;DR:** Decisões de arquitetura/processo com o PORQUÊ. Não reescrever decisões antigas — só mudar o Status ou adicionar nova.
 >
-> **Última atualização:** 2026-07-06 — Claude (Fable 5)
+> **Última atualização:** 2026-07-08 — Codex
 
 ---
 
@@ -37,7 +37,8 @@
 - **Decisão:** Tirar a `00_COLAB_IA/` do `.gitignore` e versioná-la; criar um `CLAUDE.md` na raiz (lido automaticamente pelo Claude Code) apontando para ela. Reverte a decisão temporária de 2026-06-25 de mantê-la fora do Git.
 - **Por quê:** O repo é **privado** (`fiap-devops-arqcloud-2026/tech-challenge-02`), então não há exposição. Assim, um único `git pull`/`push` sincroniza código + contexto entre os dois notebooks, e o contexto também fica disponível para o Codex.
 - **Alternativas:** sincronizar via OneDrive/Drive (mais frágil, conflita com o Git) ou repo separado (overkill) — rejeitadas.
-- **Status:** ✅ Decidida e aplicada em 2026-06-28.
+- **Status:** ✅ Decidida e aplicada em 2026-06-28. A premissa de repositório privado e
+  a política antiga de segredos foram substituídas por D-008 em 2026-07-08.
 
 ## D-006 — Entrega mínima da FIAP: 1 réplica por serviço + HPA enxuto + node group t3.medium
 - **Contexto:** Gabriel quer entregar exatamente o que o PDF da FIAP exige, "nada a mais — o básico e simples bem feito". O PDF (págs. 5 e 8) só obriga, sobre escalabilidade: (a) node group com auto scaling (ex.: Mínimo=1, Desejado=2, Máximo=4) e (b) **HPA por CPU em `evaluation-service` e `analytics-service`**. NÃO exige número de réplicas dos serviços, nem KEDA (KEDA é explicitamente "(Opcional) – Recomendado", não obrigatório).
@@ -58,3 +59,15 @@
 - **Decisão:** Usar **c7i-flex.large** (2 vCPU, 4 GB — equivalente direto da t3.medium, ~US$ 0,085/h), mantendo Min 1 / Desejado 2 / Máx 4.
 - **Alternativas:** t3.small/micro (RAM/pods insuficientes — mesmo motivo de D-006); t4g (ARM — as imagens Docker são x86); m7i-flex.large (8 GB, mais cara — desnecessária); upgrade da conta para plano pago (evitável).
 - **Status:** ✅ Aplicada em 2026-07-06. Node group `workers` Active com 2× c7i-flex.large.
+
+## D-008 — Repositório preparado para publicação sem credenciais atuais
+- **Contexto:** O repositório será disponibilizado aos professores da FIAP. O ambiente de
+  demonstração anterior mantinha `.env` e Secrets Kubernetes reais versionados.
+- **Decisão:** O `.env` passa a ser local e ignorado pelo Git; os manifestos `secret.yaml`
+  versionados contêm somente placeholders; documentos compartilhados não registram valores
+  de senhas, tokens ou chaves. Usuários criam a `SERVICE_API_KEY` no próprio banco local.
+- **Limite aceito:** Por decisão do Gabriel em 2026-07-08, o histórico Git não será
+  reescrito. Credenciais antigas continuam recuperáveis em commits anteriores e não podem
+  ser reutilizadas. A chave IAM antiga deve ser desativada antes da publicação.
+- **Status:** ✅ Decidida e aplicada no estado atual em 2026-07-08. Pendente apenas a
+  ação externa P-009: desativar a chave IAM antiga antes da publicação.

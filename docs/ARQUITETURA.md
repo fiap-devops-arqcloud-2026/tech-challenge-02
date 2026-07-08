@@ -94,7 +94,7 @@ no seu próprio ritmo.
 | D-002 | Conta pessoal da AWS (não o AWS Academy) | O Academy usa credenciais que expiram a cada ~4h (quebrariam a demo no meio) e é travado em outras regiões. |
 | D-003 | Região **us-east-2 (Ohio)** | Padronização: toda a infra num lugar só evita erros de "recurso não encontrado". |
 | D-004 | Redis/fila/NoSQL como serviços **gerenciados** (ElastiCache, SQS, DynamoDB) | SQS e DynamoDB não custam nada parados; menos coisas para operar dentro do cluster. |
-| D-005 | Pasta de contexto `00_COLAB_IA/` versionada no Git | O repo é privado; código e contexto viajam juntos entre as 2 máquinas do grupo. |
+| D-005 | Pasta de contexto `00_COLAB_IA/` versionada no Git | Código e contexto viajam juntos entre as 2 máquinas; segredos ficam fora do repositório conforme D-008. |
 | D-006 | Entrega mínima: 1 réplica por serviço, HPA só onde o PDF exige | O PDF pede HPA no evaluation e no analytics — entregamos exatamente isso, simples e bem feito. |
 | D-007 | Nós **c7i-flex.large** (não t3.medium) | O plano gratuito **bloqueou** a t3.medium na hora de criar as máquinas; a c7i-flex.large é equivalente (2 vCPU / 4 GB) e é permitida. |
 
