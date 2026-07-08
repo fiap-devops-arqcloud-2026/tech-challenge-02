@@ -593,6 +593,65 @@ kubectl rollout restart deployment/evaluation-service -n togglemaster
 
 ---
 
+## 🚀 Melhorias futuras (evolução DevOps)
+
+Esta fase entregou a **aplicação funcionando na nuvem** — que é o objetivo do desafio. Os próximos
+passos naturais de maturidade DevOps são **automatizar dois trabalhos que hoje fazemos na mão**:
+criar a infraestrutura e publicar o código. Abaixo, os dois candidatos mais diretos.
+
+### 1. Terraform — infraestrutura como código
+
+Hoje criamos o cluster, os bancos, os repositórios de imagem e as filas **clicando no console da AWS**.
+Com o Terraform, isso vira **texto**: você descreve o que quer e a ferramenta cria, atualiza ou destrói
+tudo com um comando. Exemplo — os 5 repositórios ECR que criamos à mão viram isto:
+
+```hcl
+# Cria os 5 repositórios de imagem, um por microsserviço
+resource "aws_ecr_repository" "servicos" {
+  for_each = toset(["auth", "flag", "targeting", "evaluation", "analytics"])
+  name     = "${each.key}-service"
+}
+```
+
+**Por que isso ajuda / o que facilita:**
+- **Reproduzível:** qualquer pessoa recria o ambiente idêntico com `terraform apply` — sem depender de lembrar cada clique.
+- **Derrubar em 1 comando:** `terraform destroy` apaga tudo de uma vez (adeus ao ritual manual de deletar node group + Load Balancer + RDS um por um).
+- **Menos erro humano:** os tropeços que tivemos criando na mão (StorageClass sem padrão, porta 5432 fechada no security group) somem quando a infra é definida por código e revisada antes de aplicar.
+- **Documentação viva:** o próprio código descreve a infraestrutura — nada de "print de tela que desatualiza".
+
+### 2. GitHub Actions — CI/CD (esteira automática)
+
+Hoje, quando o código muda, alguém precisa lembrar de reconstruir as 5 imagens, enviá-las ao ECR e
+atualizar o cluster. Com o GitHub Actions, isso acontece **sozinho a cada `git push`**:
+
+```yaml
+on:
+  push:
+    branches: [main]          # dispara a cada push na main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4                 # baixa o código
+      - uses: aws-actions/amazon-ecr-login@v2     # conecta no ECR
+      - run: |
+          docker build -t $ECR/auth-service ./services/auth-service
+          docker push  $ECR/auth-service          # (repete para os 5 serviços)
+      - run: kubectl rollout restart deployment -n togglemaster  # atualiza os pods
+```
+
+**Por que isso ajuda / o que facilita:**
+- **Zero passo manual:** ninguém mais faz `build`/`push`/`apply` na mão — some o risco de "esqueci de subir uma imagem".
+- **Deploys consistentes:** toda mudança aprovada vai para o ar do mesmo jeito, sempre.
+- **Mais seguro:** o GitHub Actions se conecta à AWS por **OIDC** (um acesso temporário), o que **dispensa guardar chave fixa** — exatamente o tipo de credencial estática que nos obrigou a limpar este repositório antes de torná-lo público.
+
+> **Em resumo:** o **Terraform** monta o "terreno e a casa" (a infraestrutura) e o **GitHub Actions**
+> "troca a mobília" (publica o código) a cada mudança. Juntos, eliminam o trabalho manual e são a
+> evolução natural para as próximas fases do curso.
+
+---
+
 ## 👥 Time
 
 Projeto desenvolvido para a **Fase 2 do Tech Challenge** da pós-graduação em **DevOps e Arquitetura Cloud** — POSTECH FIAP.
