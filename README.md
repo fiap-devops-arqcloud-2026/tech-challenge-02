@@ -595,15 +595,15 @@ kubectl rollout restart deployment/evaluation-service -n togglemaster
 
 ## 🚀 Melhorias futuras (evolução DevOps)
 
-Esta fase entregou a **aplicação funcionando na nuvem** — que é o objetivo do desafio. Os próximos
-passos naturais de maturidade DevOps são **automatizar dois trabalhos que hoje fazemos na mão**:
-criar a infraestrutura e publicar o código. Abaixo, os dois candidatos mais diretos.
+Nesta fase a gente colocou a **aplicação rodando na nuvem** — que era o objetivo. Daqui pra frente,
+o caminho natural é **parar de fazer na mão** duas coisas que hoje dão trabalho: montar a
+infraestrutura e publicar o código. Ficam aqui as duas ideias mais diretas pra quando a gente voltar.
 
-### 1. Terraform — infraestrutura como código
+### 1. Terraform — a infraestrutura vira código
 
-Hoje criamos o cluster, os bancos, os repositórios de imagem e as filas **clicando no console da AWS**.
-Com o Terraform, isso vira **texto**: você descreve o que quer e a ferramenta cria, atualiza ou destrói
-tudo com um comando. Exemplo — os 5 repositórios ECR que criamos à mão viram isto:
+Hoje a gente cria o cluster, os bancos, os repositórios de imagem e as filas **clicando no console da AWS**.
+Com o Terraform, tudo isso vira **texto**: você escreve o que quer, roda um comando e ele monta (ou apaga)
+pra você. Por exemplo — aqueles 5 repositórios ECR que criamos um por um viram só isto:
 
 ```hcl
 # Cria os 5 repositórios de imagem, um por microsserviço
@@ -613,16 +613,16 @@ resource "aws_ecr_repository" "servicos" {
 }
 ```
 
-**Por que isso ajuda / o que facilita:**
-- **Reproduzível:** qualquer pessoa recria o ambiente idêntico com `terraform apply` — sem depender de lembrar cada clique.
-- **Derrubar em 1 comando:** `terraform destroy` apaga tudo de uma vez (adeus ao ritual manual de deletar node group + Load Balancer + RDS um por um).
-- **Menos erro humano:** os tropeços que tivemos criando na mão (StorageClass sem padrão, porta 5432 fechada no security group) somem quando a infra é definida por código e revisada antes de aplicar.
-- **Documentação viva:** o próprio código descreve a infraestrutura — nada de "print de tela que desatualiza".
+**No que isso ajuda:**
+- **Dá pra repetir sem dor:** um `terraform apply` recria o ambiente igualzinho — ninguém precisa lembrar de cada clique.
+- **Derruba tudo de uma vez:** um `terraform destroy` e acabou (chega daquele ritual de deletar node group, Load Balancer e RDS um por um).
+- **Erra menos:** aqueles perrengues que tivemos na mão (a StorageClass sem padrão, a porta 5432 fechada) simplesmente não acontecem quando a infra é código e a gente revisa antes de aplicar.
+- **A doc nunca desatualiza:** o próprio código já é a descrição da infra — nada de print de tela que envelhece.
 
-### 2. GitHub Actions — CI/CD (esteira automática)
+### 2. GitHub Actions — o deploy no piloto automático
 
-Hoje, quando o código muda, alguém precisa lembrar de reconstruir as 5 imagens, enviá-las ao ECR e
-atualizar o cluster. Com o GitHub Actions, isso acontece **sozinho a cada `git push`**:
+Hoje, toda vez que o código muda, alguém tem que lembrar de reconstruir as 5 imagens, mandar pro ECR e
+atualizar o cluster. Com o GitHub Actions, isso rola **sozinho a cada `git push`**:
 
 ```yaml
 on:
@@ -641,14 +641,14 @@ jobs:
       - run: kubectl rollout restart deployment -n togglemaster  # atualiza os pods
 ```
 
-**Por que isso ajuda / o que facilita:**
-- **Zero passo manual:** ninguém mais faz `build`/`push`/`apply` na mão — some o risco de "esqueci de subir uma imagem".
-- **Deploys consistentes:** toda mudança aprovada vai para o ar do mesmo jeito, sempre.
-- **Mais seguro:** o GitHub Actions se conecta à AWS por **OIDC** (um acesso temporário), o que **dispensa guardar chave fixa** — exatamente o tipo de credencial estática que nos obrigou a limpar este repositório antes de torná-lo público.
+**No que isso ajuda:**
+- **Ninguém faz nada na mão:** acabou o `build`/`push`/`apply` manual — e aquele clássico "ih, esqueci de subir uma imagem".
+- **Todo deploy sai igual:** cada mudança aprovada vai pro ar do mesmo jeito, sempre.
+- **Mais seguro de brinde:** o GitHub Actions entra na AWS por **OIDC** (um acesso temporário), então **não precisa guardar chave fixa** — justamente o tipo de credencial que a gente teve que limpar antes de deixar o repo público.
 
-> **Em resumo:** o **Terraform** monta o "terreno e a casa" (a infraestrutura) e o **GitHub Actions**
-> "troca a mobília" (publica o código) a cada mudança. Juntos, eliminam o trabalho manual e são a
-> evolução natural para as próximas fases do curso.
+> **Resumindo:** o **Terraform** levanta a casa (a infraestrutura) e o **GitHub Actions** cuida da mudança
+> (publica o código) toda vez que algo muda. Juntos, tiram o trabalho manual do caminho — e são o passo
+> natural pras próximas fases.
 
 ---
 
