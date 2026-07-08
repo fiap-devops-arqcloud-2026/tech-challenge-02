@@ -6,6 +6,25 @@
 
 ---
 
+## 2026-07-08 13:45 (BRT) — Codex — Publicação concluída na branch dev
+
+**Feito:** commit principal `2ebe9af` criado e enviado para `origin/dev`, contendo todo o
+escopo autorizado: saneamento das credenciais atuais, README reproduzível, Secrets com
+placeholders, remoção do `.env` versionado, remoção do executável, `AGENTS.md` e PDF de teste.
+
+**Decisões/Por quê:** não foi aberto PR automaticamente. A branch remota padrão é `dev`;
+`main` e `dev` estão divergentes, mas a simulação de merge terminou sem conflitos.
+
+**Arquivos:** publicação de todos os arquivos listados nas entradas anteriores.
+
+**Descobertas:** após o push, `dev` estava 21 commits à frente e 3 atrás de `main`. Não
+havia PR aberto `dev → main` e a proteção de branch não estava disponível no repositório
+privado atual.
+
+**Estado p/ o próximo agente:** alterações publicadas em `dev`. Próxima decisão humana:
+abrir PR `dev → main` para revisão e merge; depois, excluir definitivamente a chave IAM
+desativada antes de tornar o repositório público (P-009).
+
 ## 2026-07-08 13:43 (BRT) — Codex — Chave IAM desativada + publicação solicitada
 
 **Feito:** Gabriel confirmou que a chave IAM antiga foi desativada, mas ainda não excluída.
