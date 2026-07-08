@@ -6,18 +6,24 @@ import (
 	"net/http"
 )
 
+// EvaluationResponse é o JSON devolvido ao cliente em GET /evaluate
 type EvaluationResponse struct {
-	FlagName string `json:"flag_name"`
-	UserID   string `json:"user_id"`
-	Result   bool   `json:"result"`
+	FlagName string `json:"flag_name"` // nome da flag avaliada
+	UserID   string `json:"user_id"`   // usuário para quem foi avaliada
+	Result   bool   `json:"result"`    // o veredito: true (liberado) ou false (negado)
 }
 
+// healthHandler responde ao GET /health — usado pelos probes do Kubernetes
+// e pelo healthcheck do docker compose para saber se o serviço está vivo.
 func (a *App) healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
+// evaluationHandler atende ao GET /evaluate?user_id=...&flag_name=... — o
+// endpoint mais importante do sistema (hot path). Fluxo: valida parâmetros →
+// decide (cache/serviços) → publica o evento no SQS SEM bloquear → responde.
 func (a *App) evaluationHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

@@ -66,6 +66,7 @@ def require_auth(f):
 
 @app.route('/health')
 def health():
+    """ Verificação de saúde — usada pelos probes do Kubernetes e do docker compose """
     return jsonify({"status": "ok"})
 
 @app.route('/rules', methods=['POST'])

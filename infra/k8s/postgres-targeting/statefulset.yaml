@@ -1,0 +1,127 @@
+# ============================================================
+# STATEFULSET — postgres-targeting (PostgreSQL rodando como pod)
+# ============================================================
+# Roda o banco targeting_db DENTRO do cluster EKS, em vez de no RDS.
+#
+# POR QUE StatefulSet (e não Deployment)?
+# - Bancos de dados têm ESTADO (os dados). O StatefulSet garante identidade
+#   estável e, principalmente, conecta o pod a um disco persistente (PVC)
+#   que sobrevive a reinícios do pod. Um Deployment comum perderia os dados.
+#
+# PRÉ-REQUISITO NO EKS: o add-on "Amazon EBS CSI Driver" precisa estar
+# instalado para que o PVC abaixo consiga criar o disco (volume EBS)
+# automaticamente. Sem ele, o pod fica "Pending" esperando o volume.
+# ============================================================
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-targeting
+  namespace: togglemaster
+  labels:
+    app: postgres-targeting
+
+spec:
+  # Nome do Service headless que governa este StatefulSet (DNS estável)
+  serviceName: postgres-targeting
+
+  # 1 réplica: é um banco único, não replicado (suficiente para o desafio)
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: postgres-targeting
+
+  template:
+    metadata:
+      labels:
+        app: postgres-targeting
+    spec:
+      containers:
+        - name: postgres
+          # Mesma imagem do ambiente local (docker-compose) — consistência total
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 5432
+              name: postgres
+
+          env:
+            # Usuário e senha vêm do Secret (não ficam expostos aqui)
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-targeting-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-targeting-secret
+                  key: POSTGRES_PASSWORD
+
+            # Nome do banco a ser criado automaticamente na primeira inicialização
+            - name: POSTGRES_DB
+              value: "targeting_db"
+
+            # PGDATA aponta para uma SUBPASTA do volume montado.
+            # Truque importante: volumes EBS criam uma pasta "lost+found" na
+            # raiz do mount, o que faz o initdb reclamar que o diretório não
+            # está vazio. Usar uma subpasta (pgdata) evita esse erro.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+
+          volumeMounts:
+            # Disco persistente onde os dados do banco ficam guardados
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            # Schema inicial (ConfigMap) — rodado só na primeira criação
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+
+          # Recursos modestos — um Postgres pequeno para o desafio
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          # ReadinessProbe: o banco só é considerado "pronto para receber
+          # conexões" quando o pg_isready responder com sucesso. Assim o
+          # targeting-service não tenta conectar antes da hora.
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d targeting_db"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 6
+
+          # LivenessProbe: se o banco travar e parar de responder, o
+          # Kubernetes reinicia o pod automaticamente.
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\""]
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 3
+
+      volumes:
+        # Volume do schema inicial, vindo do ConfigMap (somente leitura)
+        - name: init
+          configMap:
+            name: postgres-targeting-init
+
+  # volumeClaimTemplates: o StatefulSet cria automaticamente um PVC (disco)
+  # para o pod. No EKS, isso vira um volume EBS provisionado sob demanda.
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]   # montado por um único nó por vez
+        # storageClassName omitido de propósito: usa a StorageClass padrão
+        # do cluster (no EKS, normalmente "gp2"/"gp3" via EBS CSI Driver).
+        resources:
+          requests:
+            storage: 5Gi                 # 5 GB é folgado para este banco

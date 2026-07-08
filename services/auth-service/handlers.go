@@ -1,12 +1,10 @@
 package main
 
 import (
-	//	"crypto/sha256" <-- Dep. não usadas que matam o código
-	//	"encoding/hex" <-- Dep. não usadas que matam o código
-	"encoding/json"
+	"encoding/json" // serializa as respostas da API em JSON
 	"log"
 	"net/http"
-	"strings"
+	"strings" // usado para extrair a chave do header "Authorization: Bearer ..."
 )
 
 // Estrutura para o corpo da requisição de criação de chave

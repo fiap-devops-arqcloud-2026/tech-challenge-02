@@ -1,0 +1,32 @@
+# ============================================================
+# SERVICE — postgres-targeting (headless, para o StatefulSet)
+# ============================================================
+# Dá um nome DNS estável ao banco dentro do cluster. O targeting-service
+# vai se conectar usando o host "postgres-targeting" na porta 5432:
+#   postgres://toggle:SENHA@postgres-targeting:5432/targeting_db
+#
+# POR QUE "headless" (clusterIP: None)?
+# - StatefulSets usam um Service headless para dar identidade de rede estável
+#   aos pods. Com 1 réplica, o nome "postgres-targeting" resolve direto para
+#   o IP do pod do banco. É o padrão recomendado para bancos em StatefulSet.
+# ============================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-targeting       # hostname DNS interno: postgres-targeting:5432
+  namespace: togglemaster
+  labels:
+    app: postgres-targeting
+
+spec:
+  clusterIP: None                # headless: DNS aponta direto para o pod
+
+  selector:
+    app: postgres-targeting      # encaminha para os pods com este label
+
+  ports:
+    - name: postgres
+      port: 5432                 # porta padrão do PostgreSQL
+      targetPort: 5432
+      protocol: TCP

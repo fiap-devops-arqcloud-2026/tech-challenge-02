@@ -1,2 +1,9 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Scripts shell e SQL SEMPRE com quebra de linha Linux (LF), em qualquer sistema.
+# Motivo (2026-07-06): no Windows o Git baixava .sh com CRLF, e o script quebrava
+# dentro do contêiner Linux ("/bin/sh^M: bad interpreter") — o postgres-app não
+# criava o targeting_db e o docker compose falhava.
+*.sh text eol=lf
+*.sql text eol=lf

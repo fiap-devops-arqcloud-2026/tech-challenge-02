@@ -1,15 +1,15 @@
 package main
 
 import (
-	"database/sql"
-	//	"fmt" <-- Dep. não usadas que matam o código
+	"database/sql" // interface padrão de banco de dados do Go
 	"log"
 	"net/http"
 	"os"
 
-	//	"github.com/jackc/pgx/v4/stdlib" <-- Era assim
-	_ "github.com/jackc/pgx/v4/stdlib" // <-- Ficou Assim
-	"github.com/joho/godotenv"
+	// O "_" importa o driver pgx apenas pelos efeitos colaterais (ele se registra
+	// no database/sql); o código usa a interface padrão, não o pacote diretamente.
+	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/joho/godotenv" // carrega o arquivo .env no desenvolvimento local
 )
 
 // App struct (para injeção de dependência)

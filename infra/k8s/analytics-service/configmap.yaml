@@ -20,7 +20,7 @@ data:
   PORT: "8005"
 
   # Região AWS onde o SQS e DynamoDB estão criados
-  AWS_REGION: "us-east-1"   # altere se usar outra região
+  AWS_REGION: "us-east-2"   # Ohio — região onde toda a infra do projeto foi criada
 
   # Nome da tabela DynamoDB onde os eventos de avaliação são salvos
   # Deve ser exatamente o mesmo nome da tabela criada no console AWS

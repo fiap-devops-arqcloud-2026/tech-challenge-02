@@ -1,10 +1,9 @@
 package main
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/hex"
-	//	"fmt" <-- Dep. não usadas que matam o código
+	"crypto/rand"   // gerador de números aleatórios criptograficamente seguro
+	"crypto/sha256" // hash usado para armazenar a chave sem expor o valor original
+	"encoding/hex"  // converte bytes para texto hexadecimal legível
 )
 
 // generateAPIKey cria uma string aleatória segura de 32 bytes

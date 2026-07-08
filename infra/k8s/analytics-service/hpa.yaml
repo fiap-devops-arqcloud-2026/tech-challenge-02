@@ -36,8 +36,8 @@ spec:
   # Mínimo de 1 pod — worker sempre rodando para processar mensagens
   minReplicas: 1
 
-  # Máximo de 4 pods — limita custo e evita sobrecarga no DynamoDB
-  maxReplicas: 4
+  # Máximo de 2 pods — limita custo e evita sobrecarga no DynamoDB (demo enxuta)
+  maxReplicas: 2
 
   metrics:
     - type: Resource
