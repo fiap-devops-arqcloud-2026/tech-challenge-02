@@ -516,6 +516,25 @@ Os manifests Kubernetes estão em [`infra/k8s/`](./infra/k8s/).
 | Banco NoSQL | DynamoDB | analytics-service |
 | Fila de mensagens | SQS | Comunicação evaluation → analytics |
 
+### Configuração dos secrets (antes do deploy)
+
+Os arquivos `infra/k8s/*/secret.yaml` vêm com placeholders `REPLACE_WITH_...` e usam
+`stringData` — ou seja, você escreve os valores **em texto puro** e o Kubernetes codifica
+sozinho ao aplicar (**não** é preciso gerar Base64). Preencha na sua cópia local:
+
+| Placeholder | O que colocar |
+|---|---|
+| `REPLACE_WITH_DB_PASSWORD` | Senha dos bancos RDS (a mesma nos dois) |
+| `REPLACE_WITH_RDS_ENDPOINT` | Endpoint de cada RDS (auth e flags) |
+| `REPLACE_WITH_TARGETING_DB_PASSWORD` | Senha do banco targeting — **igual** nos dois arquivos que a citam |
+| `REPLACE_WITH_STRONG_RANDOM_MASTER_KEY` | Uma chave forte e aleatória (cria as API keys) |
+| `REPLACE_WITH_AWS_ACCOUNT_ID` | Número da sua conta AWS (aparece na URL do SQS) |
+| `REPLACE_WITH_AWS_ACCESS_KEY_ID` / `REPLACE_WITH_AWS_SECRET_ACCESS_KEY` | Chave IAM com acesso a SQS e DynamoDB |
+| `REPLACE_WITH_SERVICE_API_KEY` | Deixe como está — criada **depois** do deploy (veja o passo final) |
+
+> 📖 O passo a passo completo — inclusive de onde tirar cada endpoint na AWS — está no
+> [GUIA-AWS.md](./GUIA-AWS.md) (seção 11).
+
 ### Aplicando os manifests
 
 ```bash
@@ -542,11 +561,35 @@ kubectl apply -f infra/k8s/ingress.yaml
 kubectl get pods -n togglemaster
 ```
 
+### Último passo: criar a SERVICE_API_KEY de produção
+
+Assim como no ambiente local, o banco novo do `auth-service` começa vazio. Depois que os pods
+subirem, crie a chave que o `evaluation-service` usa para consultar flags e regras:
+
+```powershell
+# Descubra o endereço público do Load Balancer
+kubectl get ingress -n togglemaster    # copie o valor da coluna ADDRESS
+
+# Crie a chave (troque SEU_LB e SUA_MASTER_KEY pelos seus valores)
+curl.exe -X POST http://SEU_LB/admin/keys `
+  -H "Content-Type: application/json" `
+  -H "Authorization: Bearer SUA_MASTER_KEY" `
+  -d '{\"name\": \"evaluation-service-prod\"}'
+```
+
+Cole a `key` retornada no campo `SERVICE_API_KEY` do `evaluation-service/secret.yaml`
+(texto puro, sem Base64), reaplique o secret e reinicie o serviço:
+
+```powershell
+kubectl apply -f infra/k8s/evaluation-service/secret.yaml
+kubectl rollout restart deployment/evaluation-service -n togglemaster
+```
+
 > ℹ️ **Pré-requisitos no cluster:** EBS CSI Driver (para o disco do pod targeting), Metrics Server (para os HPAs) e Nginx Ingress Controller. O passo a passo completo — incluindo a criação do cluster e do node group pelo console — está no [GUIA-AWS.md](./GUIA-AWS.md).
 >
 > ⚠️ **Sobre os secrets:** os arquivos `infra/k8s/*/secret.yaml` contêm somente
-> placeholders. Preencha-os localmente antes do deploy e nunca envie os valores reais
-> ao Git. Base64 é apenas codificação e não protege uma credencial publicada.
+> placeholders. Preencha-os apenas na cópia local antes do deploy e nunca envie os valores
+> reais ao Git. Base64 é apenas codificação e não protege uma credencial publicada.
 
 ---
 

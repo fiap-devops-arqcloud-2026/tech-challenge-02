@@ -2,7 +2,20 @@
 
 > **TL;DR:** Diário de sessões. Nunca apagar/reescrever entradas antigas — só acrescentar no topo. A cada ~5 entradas, resumir as antigas no DOSSIE e manter só as 5 recentes aqui.
 >
-> **Última atualização:** 2026-07-08 — Codex
+> **Última atualização:** 2026-07-08 — Claude (Fable 5)
+
+---
+
+## 2026-07-08 — Claude (Fable 5) — Consistência das docs de replicação (secrets já scrubados pelo Codex)
+
+**Contexto:** Gabriel pediu para scrubar secrets/.env e deixar a doc de replicação clara para o repo PÚBLICO. Ao verificar, o **Codex já tinha feito o scrub** (commit `2ebe9af`): `.env` fora do Git e ignorado; `.env.example` limpo; os 6 `secret.yaml` convertidos de base64 para `stringData` com placeholders `REPLACE_WITH_...`; binário `auth-service.exe` removido. Chave IAM revogada + RDS excluídos pelo Gabriel → segredos antigos no histórico estão INERTES. (Codex registrou P-009: excluir a chave IAM em definitivo antes de publicar.)
+
+**Feito nesta sessão (só documentação — o código de secrets já estava certo):**
+- **GUIA-AWS.md §11/§12 corrigido:** instruíam gerar **Base64**, mas os secrets agora usam `stringData` (texto puro) — encodar em base64 quebraria a senha. Reescrito para texto puro; tabela corrigida (targeting = pod `postgres-targeting:5432`; adicionada a linha do `postgres-targeting/secret.yaml`); §11.3 ganhou o apply do `postgres-targeting/`; §12 sem o passo de base64.
+- **README.md:** nova subseção "Configuração dos secrets (antes do deploy)" (tabela placeholder→valor, nota de `stringData` sem base64) + "Último passo: criar a SERVICE_API_KEY de produção" fechando o fluxo de replicação na nuvem.
+- Memória privada `repo-tratado-como-laboratorio` atualizada (repo agora PÚBLICO com placeholders — não re-adicionar segredos reais).
+
+**Estado:** entrega segue igual (falta só o link do YouTube no relatório). Docs de replicação consistentes local + nuvem. Verificar com Codex o P-009 (exclusão definitiva da chave IAM) antes de tornar público.
 
 ---
 
