@@ -466,30 +466,33 @@ abc123.us-east-2.elb.amazonaws.com
 
 ## 11. Preencher os manifests e fazer o deploy
 
-### 11.1 Gerar os valores Base64 para os Secrets
+### 11.1 Preencher os Secrets (texto puro — SEM Base64)
 
-Os Kubernetes Secrets precisam dos valores em Base64. Execute no PowerShell:
+Os arquivos `infra/k8s/*/secret.yaml` vêm com **placeholders** no formato `REPLACE_WITH_...`.
+Eles usam o campo **`stringData`**, então você escreve os valores **em texto puro** e o
+Kubernetes converte para Base64 sozinho ao aplicar. **Não gere Base64 na mão** — se você
+colar um valor já em Base64, a senha ficará errada.
 
-```powershell
-# Como gerar Base64 no PowerShell:
-[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("seu-valor-aqui"))
-```
+> ⚠️ Preencha os valores **apenas na sua cópia local** e **nunca** os envie ao Git.
+> Base64 é só codificação (qualquer um decodifica), não protege uma credencial publicada.
 
-Gere Base64 para cada valor e preencha nos arquivos `secret.yaml`:
+Troque cada placeholder pelo valor real:
 
-| Arquivo | Campo | Valor para converter |
+| Arquivo | Campo | O que colocar |
 |---|---|---|
+| `postgres-targeting/secret.yaml` | `POSTGRES_PASSWORD` | Uma senha forte para o banco do targeting |
 | `auth-service/secret.yaml` | `DATABASE_URL` | `postgres://toggle:SENHA@ENDPOINT_AUTH:5432/auth_db` |
-| `auth-service/secret.yaml` | `MASTER_KEY` | Sua master key de produção |
+| `auth-service/secret.yaml` | `MASTER_KEY` | Uma chave forte e aleatória (usada para criar as API keys) |
 | `flag-service/secret.yaml` | `DATABASE_URL` | `postgres://toggle:SENHA@ENDPOINT_FLAGS:5432/flags_db` |
-| `targeting-service/secret.yaml` | `DATABASE_URL` | `postgres://toggle:SENHA@ENDPOINT_TARGETING:5432/targeting_db` |
-| `evaluation-service/secret.yaml` | `SERVICE_API_KEY` | Será criado no passo 12 |
+| `targeting-service/secret.yaml` | `DATABASE_URL` | `postgres://toggle:SENHA@postgres-targeting:5432/targeting_db` — aponta para o **POD**, não RDS |
+| `evaluation-service/secret.yaml` | `SERVICE_API_KEY` | Deixe o placeholder por enquanto — criada no passo 12 |
 | `evaluation-service/secret.yaml` | `AWS_SQS_URL` | URL da fila SQS |
-| `evaluation-service/secret.yaml` | `AWS_ACCESS_KEY_ID` | Seu Access Key ID |
-| `evaluation-service/secret.yaml` | `AWS_SECRET_ACCESS_KEY` | Sua Secret Access Key |
-| `analytics-service/secret.yaml` | `AWS_SQS_URL` | URL da fila SQS |
-| `analytics-service/secret.yaml` | `AWS_ACCESS_KEY_ID` | Seu Access Key ID |
-| `analytics-service/secret.yaml` | `AWS_SECRET_ACCESS_KEY` | Sua Secret Access Key |
+| `evaluation-service/secret.yaml` | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | Chave IAM com acesso a SQS e DynamoDB |
+| `analytics-service/secret.yaml` | `AWS_SQS_URL` | A mesma URL da fila SQS |
+| `analytics-service/secret.yaml` | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | A mesma chave IAM |
+
+> 💡 A senha em `postgres-targeting/secret.yaml` e a senha dentro do `DATABASE_URL` do
+> `targeting-service` **têm de ser iguais** — é o mesmo banco (o pod PostgreSQL do cluster).
 
 ### 11.2 Atualizar os ConfigMaps
 
@@ -507,14 +510,17 @@ Execute na ordem:
 # 1. Criar o namespace
 kubectl apply -f infra/k8s/00-namespaces.yaml
 
-# 2. Aplicar os recursos de cada serviço
+# 2. Subir primeiro o banco do targeting (pod com disco EBS)
+kubectl apply -f infra/k8s/postgres-targeting/
+
+# 3. Aplicar os recursos de cada serviço
 kubectl apply -f infra/k8s/auth-service/
 kubectl apply -f infra/k8s/flag-service/
 kubectl apply -f infra/k8s/targeting-service/
 kubectl apply -f infra/k8s/evaluation-service/
 kubectl apply -f infra/k8s/analytics-service/
 
-# 3. Aplicar o Ingress
+# 4. Aplicar o Ingress (cria o Load Balancer público)
 kubectl apply -f infra/k8s/ingress.yaml
 ```
 
@@ -558,10 +564,9 @@ curl.exe -X POST http://SEU_LOAD_BALANCER/admin/keys `
   -d '{\"name\": \"evaluation-service-prod\"}'
 ```
 
-Copie o valor de `"key"` retornado e:
-1. Converta para Base64
-2. Atualize o campo `SERVICE_API_KEY` em `infra/k8s/evaluation-service/secret.yaml`
-3. Reaplique o secret:
+Copie o valor de `"key"` retornado (começa com `tm_key_`) e:
+1. Cole no campo `SERVICE_API_KEY` em `infra/k8s/evaluation-service/secret.yaml` — **texto puro, sem Base64** (o secret usa `stringData`).
+2. Reaplique o secret e reinicie o serviço:
 
 ```powershell
 kubectl apply -f infra/k8s/evaluation-service/secret.yaml

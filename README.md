@@ -516,6 +516,25 @@ Os manifests Kubernetes estão em [`infra/k8s/`](./infra/k8s/).
 | Banco NoSQL | DynamoDB | analytics-service |
 | Fila de mensagens | SQS | Comunicação evaluation → analytics |
 
+### Configuração dos secrets (antes do deploy)
+
+Os arquivos `infra/k8s/*/secret.yaml` vêm com placeholders `REPLACE_WITH_...` e usam
+`stringData` — ou seja, você escreve os valores **em texto puro** e o Kubernetes codifica
+sozinho ao aplicar (**não** é preciso gerar Base64). Preencha na sua cópia local:
+
+| Placeholder | O que colocar |
+|---|---|
+| `REPLACE_WITH_DB_PASSWORD` | Senha dos bancos RDS (a mesma nos dois) |
+| `REPLACE_WITH_RDS_ENDPOINT` | Endpoint de cada RDS (auth e flags) |
+| `REPLACE_WITH_TARGETING_DB_PASSWORD` | Senha do banco targeting — **igual** nos dois arquivos que a citam |
+| `REPLACE_WITH_STRONG_RANDOM_MASTER_KEY` | Uma chave forte e aleatória (cria as API keys) |
+| `REPLACE_WITH_AWS_ACCOUNT_ID` | Número da sua conta AWS (aparece na URL do SQS) |
+| `REPLACE_WITH_AWS_ACCESS_KEY_ID` / `REPLACE_WITH_AWS_SECRET_ACCESS_KEY` | Chave IAM com acesso a SQS e DynamoDB |
+| `REPLACE_WITH_SERVICE_API_KEY` | Deixe como está — criada **depois** do deploy (veja o passo final) |
+
+> 📖 O passo a passo completo — inclusive de onde tirar cada endpoint na AWS — está no
+> [GUIA-AWS.md](./GUIA-AWS.md) (seção 11).
+
 ### Aplicando os manifests
 
 ```bash
@@ -542,11 +561,94 @@ kubectl apply -f infra/k8s/ingress.yaml
 kubectl get pods -n togglemaster
 ```
 
+### Último passo: criar a SERVICE_API_KEY de produção
+
+Assim como no ambiente local, o banco novo do `auth-service` começa vazio. Depois que os pods
+subirem, crie a chave que o `evaluation-service` usa para consultar flags e regras:
+
+```powershell
+# Descubra o endereço público do Load Balancer
+kubectl get ingress -n togglemaster    # copie o valor da coluna ADDRESS
+
+# Crie a chave (troque SEU_LB e SUA_MASTER_KEY pelos seus valores)
+curl.exe -X POST http://SEU_LB/admin/keys `
+  -H "Content-Type: application/json" `
+  -H "Authorization: Bearer SUA_MASTER_KEY" `
+  -d '{\"name\": \"evaluation-service-prod\"}'
+```
+
+Cole a `key` retornada no campo `SERVICE_API_KEY` do `evaluation-service/secret.yaml`
+(texto puro, sem Base64), reaplique o secret e reinicie o serviço:
+
+```powershell
+kubectl apply -f infra/k8s/evaluation-service/secret.yaml
+kubectl rollout restart deployment/evaluation-service -n togglemaster
+```
+
 > ℹ️ **Pré-requisitos no cluster:** EBS CSI Driver (para o disco do pod targeting), Metrics Server (para os HPAs) e Nginx Ingress Controller. O passo a passo completo — incluindo a criação do cluster e do node group pelo console — está no [GUIA-AWS.md](./GUIA-AWS.md).
 >
 > ⚠️ **Sobre os secrets:** os arquivos `infra/k8s/*/secret.yaml` contêm somente
-> placeholders. Preencha-os localmente antes do deploy e nunca envie os valores reais
-> ao Git. Base64 é apenas codificação e não protege uma credencial publicada.
+> placeholders. Preencha-os apenas na cópia local antes do deploy e nunca envie os valores
+> reais ao Git. Base64 é apenas codificação e não protege uma credencial publicada.
+
+---
+
+## 🚀 Melhorias futuras (evolução DevOps)
+
+Nesta fase a gente colocou a **aplicação rodando na nuvem** — que era o objetivo. Daqui pra frente,
+o caminho natural é **parar de fazer na mão** duas coisas que hoje dão trabalho: montar a
+infraestrutura e publicar o código. Ficam aqui as duas ideias mais diretas pra quando a gente voltar.
+
+### 1. Terraform — a infraestrutura vira código
+
+Hoje a gente cria o cluster, os bancos, os repositórios de imagem e as filas **clicando no console da AWS**.
+Com o Terraform, tudo isso vira **texto**: você escreve o que quer, roda um comando e ele monta (ou apaga)
+pra você. Por exemplo — aqueles 5 repositórios ECR que criamos um por um viram só isto:
+
+```hcl
+# Cria os 5 repositórios de imagem, um por microsserviço
+resource "aws_ecr_repository" "servicos" {
+  for_each = toset(["auth", "flag", "targeting", "evaluation", "analytics"])
+  name     = "${each.key}-service"
+}
+```
+
+**No que isso ajuda:**
+- **Dá pra repetir sem dor:** um `terraform apply` recria o ambiente igualzinho — ninguém precisa lembrar de cada clique.
+- **Derruba tudo de uma vez:** um `terraform destroy` e acabou (chega daquele ritual de deletar node group, Load Balancer e RDS um por um).
+- **Erra menos:** aqueles perrengues que tivemos na mão (a StorageClass sem padrão, a porta 5432 fechada) simplesmente não acontecem quando a infra é código e a gente revisa antes de aplicar.
+- **A doc nunca desatualiza:** o próprio código já é a descrição da infra — nada de print de tela que envelhece.
+
+### 2. GitHub Actions — o deploy no piloto automático
+
+Hoje, toda vez que o código muda, alguém tem que lembrar de reconstruir as 5 imagens, mandar pro ECR e
+atualizar o cluster. Com o GitHub Actions, isso rola **sozinho a cada `git push`**:
+
+```yaml
+on:
+  push:
+    branches: [main]          # dispara a cada push na main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4                 # baixa o código
+      - uses: aws-actions/amazon-ecr-login@v2     # conecta no ECR
+      - run: |
+          docker build -t $ECR/auth-service ./services/auth-service
+          docker push  $ECR/auth-service          # (repete para os 5 serviços)
+      - run: kubectl rollout restart deployment -n togglemaster  # atualiza os pods
+```
+
+**No que isso ajuda:**
+- **Ninguém faz nada na mão:** acabou o `build`/`push`/`apply` manual — e aquele clássico "ih, esqueci de subir uma imagem".
+- **Todo deploy sai igual:** cada mudança aprovada vai pro ar do mesmo jeito, sempre.
+- **Mais seguro de brinde:** o GitHub Actions entra na AWS por **OIDC** (um acesso temporário), então **não precisa guardar chave fixa** — justamente o tipo de credencial que a gente teve que limpar antes de deixar o repo público.
+
+> **Resumindo:** o **Terraform** levanta a casa (a infraestrutura) e o **GitHub Actions** cuida da mudança
+> (publica o código) toda vez que algo muda. Juntos, tiram o trabalho manual do caminho — e são o passo
+> natural pras próximas fases.
 
 ---
 
