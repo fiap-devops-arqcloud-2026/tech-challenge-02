@@ -6,6 +6,24 @@
 
 ---
 
+## 2026-07-08 13:48 (BRT) — Codex — PR dev → main aberto
+
+**Feito:** aberto o Pull Request rascunho **#3**, da branch `dev` para `main`:
+`https://github.com/fiap-devops-arqcloud-2026/tech-challenge-02/pull/3`.
+
+**Decisões/Por quê:** PR criado como rascunho para permitir revisão antes do merge. O PR
+centraliza a comparação, a discussão, as validações e o histórico da aprovação.
+
+**Arquivos:** `00_COLAB_IA/LOG_DE_TRABALHO.md` (registro de handoff).
+
+**Descobertas:** GitHub classificou o PR como `MERGEABLE`; nenhuma verificação automática
+obrigatória apareceu configurada. O conector retornou 404 no repo privado, então a criação
+foi concluída pelo `gh` autenticado, conforme fallback previsto.
+
+**Estado p/ o próximo agente:** PR #3 aberto em rascunho. Próximos passos humanos: revisar
+o diff, marcar como pronto e fazer o merge em `main` quando aprovado. P-009 continua aberto
+para exclusão definitiva da chave IAM antes de tornar o repositório público.
+
 ## 2026-07-08 13:45 (BRT) — Codex — Publicação concluída na branch dev
 
 **Feito:** commit principal `2ebe9af` criado e enviado para `origin/dev`, contendo todo o
