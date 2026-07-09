@@ -1,8 +1,6 @@
 # FIAP — Tech Challenge – Fase 2 – Grupo 203
 
 > **Fonte do PDF de entrega** (`FIAP - Tech Challenge - Fase 2 - Grupo 203.pdf`, nesta pasta).
-> ⚠️ O PDF foi gerado SEM o link do vídeo (upload em andamento) — quando o link chegar,
-> atualizar AQUI e REGERAR o PDF antes de enviar à FIAP.
 > Exigências do PDF da Fase 2 (pág. 9): participantes (nome, RM, Discord), link do repositório e link do vídeo.
 
 ## Participantes
@@ -18,7 +16,7 @@
 ## Links
 
 - **Repositório:** https://github.com/fiap-devops-arqcloud-2026/tech-challenge-02
-- **Vídeo da demonstração:** ⏳ (YouTube)
+- **Vídeo da demonstração:** https://youtu.be/YpunNwLpf40
 - **Pontuação extra (opcional):** o grupo ainda não concluiu a trilha do Google Cloud Skills Boost — se alguém concluir antes do prazo, incluir aqui o link do badge público (+10 pts)
 
 ## Resumo dos desafios encontrados e decisões tomadas
