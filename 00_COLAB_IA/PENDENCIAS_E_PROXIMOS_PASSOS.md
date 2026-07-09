@@ -1,10 +1,10 @@
 # PENDÊNCIAS E PRÓXIMOS PASSOS
 
-> **TL;DR:** Deploy e vídeo concluídos em 2026-07-06; node group e Load Balancer
-> desligados, e os RDS de laboratório foram excluídos. O repositório foi saneado no estado
-> atual em 2026-07-08. **Antes de publicar:** desativar a chave IAM antiga e concluir P-009.
+> **TL;DR:** Fase 2 ENTREGUE (deploy + vídeo `https://youtu.be/YpunNwLpf40` + relatório). Repo saneado e público.
+> **Infra AWS TOTALMENTE EXCLUÍDA em 2026-07-09** (EKS, RDS auth+flags, ElastiCache, EBS órfão) — custo ~US$0.
+> Chave IAM `togglemaster-deploy` revogada. Sobra só DynamoDB/SQS/ECR (Free Tier). Nada pendente de entrega.
 >
-> **Última atualização:** 2026-07-08 — Codex.
+> **Última atualização:** 2026-07-09 — Claude (Fable 5).
 
 ## Concluído
 

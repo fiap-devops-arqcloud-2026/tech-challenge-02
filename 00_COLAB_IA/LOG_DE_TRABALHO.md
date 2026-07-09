@@ -2,7 +2,23 @@
 
 > **TL;DR:** Diário de sessões. Nunca apagar/reescrever entradas antigas — só acrescentar no topo. A cada ~5 entradas, resumir as antigas no DOSSIE e manter só as 5 recentes aqui.
 >
-> **Última atualização:** 2026-07-08 — Claude (Fable 5)
+> **Última atualização:** 2026-07-09 — Claude (Fable 5)
+
+---
+
+## 2026-07-09 — Claude (Fable 5) — INFRA AWS TOTALMENTE EXCLUÍDA (fim de custos)
+
+**Contexto:** o Cost Explorer mostrou custo em us-east-2 no dia 08/07 (~US$3,84/dia): EKS US$2,40 (control plane ainda de pé), RDS US$1,01, ElastiCache US$0,41, EBS ~US$0,02. Ou seja, apesar do node group ter sido zerado antes, o **cluster, os RDS e o ElastiCache continuavam existindo e cobrando**.
+
+**Feito (Gabriel, pelo console — Claude NÃO conseguiu ajudar via CLI: a chave IAM está revogada, `aws sts get-caller-identity` retorna InvalidClientTokenId):**
+- **EKS:** node group `workers` excluído → depois o cluster `togglemaster-cluster` excluído.
+- **RDS:** `togglemaster-auth` e `togglemaster-flags` excluídos SEM snapshot final.
+- **ElastiCache:** `togglemaster-redis` excluído (sem backup).
+- **EC2/EBS:** o volume "available" que sobrou foi excluído.
+
+**Estado:** a aplicação NÃO roda mais na nuvem (infra gerenciada apagada). Restam só recursos de custo ~zero (DynamoDB, SQS, ECR no Free Tier) — podem ficar ou ser apagados. Para religar um dia: seguir o `GUIA-AWS.md` do zero (e gerar credenciais novas — as antigas estão mortas).
+
+**Pendências:** confirmar no Cost Explorer (dia seguinte) que o custo caiu a ~US$0; conferir se não sobrou EIP solto, snapshots de RDS/EBS ou o próprio ECR. Entrega da Fase 2 já estava 100% concluída — isto é só limpeza de custo.
 
 ---
 
