@@ -652,6 +652,36 @@ jobs:
 
 ---
 
+## ☸️ Recursos avançados do Kubernetes (referência para evolução)
+
+O desafio pedia o **essencial bem feito** — e é isso que está no ar. Mas o Kubernetes tem todo um
+arsenal "de produção" que ficou de fora de propósito. Esta tabela serve de **bússola para os próximos
+devs**: mostra os principais recursos avançados, o que cada um faz (com um exemplo do nosso projeto) e
+se era **exigência da entrega** ou não.
+
+**Legenda — Requisito para entrega:**
+- ✅ **Obrigatório / essencial** — o desafio exigia (ou é a base necessária que entregamos).
+- 🟡 **Opcional (recomendado)** — o desafio cita como recomendado, mas não obriga.
+- 💡 **Desejável** — não era exigido; fica como evolução.
+
+| Recurso | O que faz + exemplo no ToggleMaster | Requisito p/ entrega |
+|---|---|---|
+| **Probes + Requests/Limits** | Sondas de saúde do app e reserva/teto de CPU e memória. *No projeto:* `readinessProbe` e `livenessProbe` no `/health` + `requests`/`limits` em todos os deployments (a base que o HPA precisa para funcionar). | ✅ Obrigatório (base) |
+| **Agendamento avançado** | Controlar em qual nó cada pod roda — *Taints/Tolerations* (repelir), *Node Affinity* (atrair) — e *Eviction* (proteger nós sob pressão). *No projeto:* não usamos — os 2 nós eram iguais, sem hardware especial. | 💡 Desejável |
+| **Rollouts (Rolling Update / Recreate)** | Atualizar a versão sem derrubar o serviço (troca gradual) ou com troca total. *No projeto:* usamos o **Rolling Update padrão** a cada `kubectl apply` de imagem nova. | ✅ Padrão (usado) |
+| **Helm Charts** | Empacotar os YAMLs em "pacotes" parametrizáveis e versionados. *No projeto:* usamos o Helm só para **instalar** o Nginx Ingress; **não** criamos um Chart próprio dos 5 serviços. | 💡 Desejável |
+| **Blue/Green** | Manter dois ambientes idênticos e virar o tráfego de um pro outro num instante (rollback imediato). *No projeto:* não usamos (deploy simples bastava). | 💡 Desejável |
+| **Canary** | Liberar a versão nova para uma fração pequena de usuários e ir aumentando. *No projeto:* não usamos — mas o nosso Nginx Ingress suporta via anotação. | 💡 Desejável |
+| **Karpenter** | Criar nós (máquinas) sob demanda, do tamanho exato e com *Spot*, em segundos. *No projeto:* usamos um **node group fixo** (Mín 1 / Des 2 / Máx 4). | 💡 Desejável ¹ |
+| **KEDA** | Escalar apps por **eventos** (ex.: tamanho de uma fila) e chegar a **zero réplicas**. *No projeto:* o `analytics-service` (que consome a fila SQS) era o caso perfeito; usamos **HPA por CPU**. | 🟡 Opcional (recomendado) ² |
+| **Segurança avançada** | Identidade por app (*ServiceAccount*), permissões mínimas (*RBAC*) e TLS automático (*cert-manager*). *No projeto:* usamos **Secrets** + **IAM**; sem RBAC customizado nem cert-manager. | 💡 Desejável ³ |
+
+> ¹ O **auto scaling de nós** em si **era obrigatório** — atendido pelo node group com auto scaling (1–4 nós). O Karpenter é a evolução.
+> ² O **HPA por CPU** nos serviços `evaluation` e `analytics` **era obrigatório** e foi entregue. O KEDA é a alternativa opcional/recomendada (ideal para escalar o worker pela fila SQS).
+> ³ **ConfigMaps e Secrets** (entrega básica de Kubernetes) foram usados; RBAC customizado e cert-manager ficam como evolução.
+
+---
+
 ## 👥 Time
 
 Projeto desenvolvido para a **Fase 2 do Tech Challenge** da pós-graduação em **DevOps e Arquitetura Cloud** — POSTECH FIAP.
