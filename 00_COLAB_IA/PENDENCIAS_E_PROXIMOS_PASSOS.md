@@ -1,10 +1,10 @@
 # PENDÊNCIAS E PRÓXIMOS PASSOS
 
-> **TL;DR:** Deploy e vídeo concluídos em 2026-07-06; node group e Load Balancer
-> desligados, e os RDS de laboratório foram excluídos. O repositório foi saneado no estado
-> atual em 2026-07-08. **Antes de publicar:** desativar a chave IAM antiga e concluir P-009.
+> **TL;DR:** Fase 2 ENTREGUE (deploy + vídeo `https://youtu.be/YpunNwLpf40` + relatório). Repo saneado e público.
+> **Infra AWS TOTALMENTE EXCLUÍDA em 2026-07-09** (EKS, RDS auth+flags, ElastiCache, EBS órfão) — custo ~US$0.
+> Chave IAM `togglemaster-deploy` revogada. Sobra só DynamoDB/SQS/ECR (Free Tier). Nada pendente de entrega.
 >
-> **Última atualização:** 2026-07-08 — Codex.
+> **Última atualização:** 2026-07-09 — Claude (Fable 5).
 
 ## Concluído
 
@@ -34,7 +34,7 @@
 ## ⏭️ PRÓXIMA TAREFA — Fechar a entrega (P-008)
 ✅ **Vídeo GRAVADO em 2026-07-06.** O que falta, na ordem:
 1. **Subir o vídeo no YouTube** (não listado serve) e guardar o link.
-2. **P-008 — Relatório de entrega:** ✅ **PDF GERADO** em `docs/FIAP - Tech Challenge - Fase 2 - Grupo 203.pdf` (todos os 5 Discords confirmados), porém **com placeholder no lugar do link do vídeo** (upload em andamento). **ÚLTIMO PASSO DA FASE 2:** quando o vídeo subir no YouTube → colocar o link no `docs/RELATORIO_DE_ENTREGA.md` → regerar o PDF → enviar à FIAP. Badge Skills Boost: grupo ainda não tem (opcional).
+2. **P-008 — Relatório de entrega:** ✅ **CONCLUÍDO.** Vídeo publicado (`https://youtu.be/YpunNwLpf40`); link inserido no `docs/RELATORIO_DE_ENTREGA.md` e no PDF `docs/FIAP - Tech Challenge - Fase 2 - Grupo 203.pdf` (regerado). Obs.: o grupo tem também um `.docx` "Revisado" (mais completo) que é provavelmente o entregue de fato — decidir qual é o oficial. Badge Skills Boost: grupo não fez (opcional).
 3. ✅ **CLUSTER DERRUBADO em 2026-07-06** (após a gravação): `ingress-nginx` deletado (Load Balancer REMOVIDO — o endereço antigo morreu) e node group `workers` zerado (Min 0 / Desired 0 / Máx 4 — instâncias terminadas). Custo por hora ≈ zero. **Para religar no futuro:** node group → Edit → Desired 2 (e Min 1) → reinstalar o ingress-nginx (`kubectl apply` do manifesto oficial, provider AWS) → `kubectl apply -f infra/k8s/ingress.yaml` → o NOVO endereço do LB sai de `kubectl get svc ingress-nginx-controller -n ingress-nginx`. Os pods do togglemaster voltam sozinhos quando os nós subirem (o disco EBS do targeting foi preservado).
 
 ## 🔴 Antes de tornar o repositório público (P-009)
