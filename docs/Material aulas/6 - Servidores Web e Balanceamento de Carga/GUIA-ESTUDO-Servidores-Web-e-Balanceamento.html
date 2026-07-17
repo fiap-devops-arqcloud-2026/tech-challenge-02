@@ -1,0 +1,259 @@
+<title>Servidores Web e Balanceamento de Carga — Guia para Leigos</title>
+<style>
+  :root{
+    --bg:#eef2f8; --surface:#ffffff; --surface-2:#e7eef7; --panel:#f5f8fc;
+    --ink:#132339; --ink-soft:#4c5f79; --ink-faint:#7787a0;
+    --line:#d3ddea; --line-soft:#e2e9f2;
+    --accent:#2f6ae0; --accent-ink:#1c4aa8; --accent-wash:#e7eefb;
+    --brass:#b26a10; --brass-wash:#f6ecdd;
+    --ok:#2c8159; --warn:#a9741a; --no:#7a869a;
+    --serif:Georgia,"Iowan Old Style","Palatino Linotype","Times New Roman",serif;
+    --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --mono:"Cascadia Code",Consolas,"SFMono-Regular",ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0c1725; --surface:#152539; --surface-2:#101f31; --panel:#132234;
+      --ink:#e6edf6; --ink-soft:#a4b6cc; --ink-faint:#7488a2;
+      --line:#26394f; --line-soft:#1d2d40;
+      --accent:#6c9cf1; --accent-ink:#9cbdf8; --accent-wash:#16273f;
+      --brass:#e0a552; --brass-wash:#241c11;
+      --ok:#59bf8c; --warn:#e0a552; --no:#7f8aa0;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0c1725; --surface:#152539; --surface-2:#101f31; --panel:#132234;
+    --ink:#e6edf6; --ink-soft:#a4b6cc; --ink-faint:#7488a2;
+    --line:#26394f; --line-soft:#1d2d40;
+    --accent:#6c9cf1; --accent-ink:#9cbdf8; --accent-wash:#16273f;
+    --brass:#e0a552; --brass-wash:#241c11;
+    --ok:#59bf8c; --warn:#e0a552; --no:#7f8aa0;
+  }
+  :root[data-theme="light"]{
+    --bg:#eef2f8; --surface:#ffffff; --surface-2:#e7eef7; --panel:#f5f8fc;
+    --ink:#132339; --ink-soft:#4c5f79; --ink-faint:#7787a0;
+    --line:#d3ddea; --line-soft:#e2e9f2;
+    --accent:#2f6ae0; --accent-ink:#1c4aa8; --accent-wash:#e7eefb;
+    --brass:#b26a10; --brass-wash:#f6ecdd;
+    --ok:#2c8159; --warn:#a9741a; --no:#7a869a;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:clamp(20px,4vw,52px) clamp(16px,4vw,32px)}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:22px;margin-bottom:34px}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent-ink);margin:0 0 12px}
+  .masthead h1{font-family:var(--serif);font-weight:700;font-size:clamp(1.9rem,5.4vw,3rem);
+    line-height:1.05;margin:0;text-wrap:balance;letter-spacing:-.01em}
+  .masthead .sub{font-size:clamp(1rem,2.4vw,1.18rem);color:var(--ink-soft);margin:.5em 0 0;max-width:62ch}
+  .meta{font-family:var(--mono);font-size:.74rem;color:var(--ink-faint);margin-top:16px;
+    display:flex;flex-wrap:wrap;gap:6px 18px}
+  h2{font-family:var(--serif);font-weight:700;font-size:clamp(1.4rem,3.4vw,1.9rem);
+    margin:52px 0 6px;letter-spacing:-.01em;text-wrap:balance}
+  .section-rule{height:3px;width:56px;background:var(--accent);border-radius:2px;margin:14px 0 24px}
+  p{max-width:68ch}
+  .lead{color:var(--ink-soft);margin:0 0 22px;max-width:66ch}
+  strong{color:var(--ink)}
+  .intro{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+  @media(max-width:620px){.intro{grid-template-columns:1fr}}
+  .intro .box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  .intro .box h3{margin:0 0 8px;font-size:1.05rem;font-family:var(--sans);font-weight:700}
+  .intro .box p{margin:0;font-size:.96rem;color:var(--ink-soft);max-width:none}
+  .intro .box.hi{border-color:var(--brass);background:var(--brass-wash)}
+  .glossary{background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;
+    padding:clamp(16px,3vw,26px);display:grid;grid-template-columns:1fr 1fr;gap:2px 26px}
+  @media(max-width:640px){.glossary{grid-template-columns:1fr}}
+  .term{padding:11px 0;border-bottom:1px solid var(--line-soft)}
+  .term .k{font-family:var(--mono);font-weight:700;color:var(--accent-ink);font-size:.92rem}
+  .term .full{font-style:italic;color:var(--ink-faint);font-size:.86rem;margin-left:6px}
+  .term .d{display:block;color:var(--ink-soft);font-size:.94rem;margin-top:2px}
+  .lessons{display:flex;flex-direction:column;gap:18px}
+  .lesson{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:clamp(18px,3vw,26px);transition:border-color .18s ease}
+  .lesson:hover{border-color:var(--accent)}
+  .lesson-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
+  .num{font-family:var(--serif);font-size:2.1rem;font-weight:700;line-height:1;
+    color:var(--accent);min-width:1.6em;font-variant-numeric:tabular-nums}
+  .lesson-head h3{margin:2px 0 8px;font-size:clamp(1.12rem,2.6vw,1.3rem);
+    font-family:var(--sans);font-weight:700;line-height:1.25}
+  .badge{display:inline-block;font-family:var(--mono);font-size:.68rem;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid currentColor}
+  .badge.ok{color:var(--ok)} .badge.warn{color:var(--warn)} .badge.no{color:var(--no)}
+  .facets{margin:0;display:grid;gap:14px}
+  .facets > div{display:grid;grid-template-columns:150px 1fr;gap:4px 18px;align-items:baseline}
+  @media(max-width:600px){.facets > div{grid-template-columns:1fr}}
+  .facets dt{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--accent-ink);margin:0}
+  .facets dd{margin:0;color:var(--ink-soft);font-size:.97rem}
+  .facets dd.proj{color:var(--ink)}
+  .facets .use{color:var(--brass)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--accent-wash);
+    color:var(--accent-ink);padding:1px 6px;border-radius:5px}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:.92rem}
+  th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line-soft)}
+  thead th{background:var(--surface-2);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  tbody tr:last-child td{border-bottom:none}
+  td .s{font-family:var(--mono);font-size:.78rem;font-weight:700}
+  td .s.ok{color:var(--ok)} td .s.warn{color:var(--warn)} td .s.no{color:var(--no)}
+  td .num2{font-family:var(--serif);font-weight:700;color:var(--accent)}
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--ink-faint);font-size:.86rem}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<main class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">Módulo 6 · DevOps e Arquitetura Cloud · FIAP</p>
+    <h1>Servidores Web e Balanceamento de Carga</h1>
+    <p class="sub">Como o tráfego é recebido, distribuído e protegido — em 5 aulas, com o significado de cada sigla, para que serve e um exemplo real do nosso projeto.</p>
+    <div class="meta"><span>Guia de estudo</span><span>5 aulas</span><span>+ glossário de siglas</span><span>+ conexão com o ToggleMaster</span></div>
+  </header>
+
+  <section>
+    <div class="intro">
+      <div class="box">
+        <h3>Do que trata este módulo?</h3>
+        <p>Do <strong>"porteiro" da aplicação</strong>: o servidor web (Nginx/Apache) que recebe as requisições, o <strong>balanceador</strong> que as distribui entre vários servidores, e as camadas de <strong>segurança e alta disponibilidade</strong> que mantêm tudo no ar e protegido.</p>
+      </div>
+      <div class="box hi">
+        <h3>Por que combina com o nosso projeto</h3>
+        <p>Nosso <strong>Nginx Ingress</strong> é exatamente o assunto deste módulo. As aulas 1 a 3 (servidor web, balanceamento e Ingress no Kubernetes) são o que fizemos na prática. As 4 e 5 (Istio e WAF) são a evolução.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Glossário — o significado das siglas</h2>
+    <div class="section-rule"></div>
+    <p class="lead">Todos os termos e siglas que aparecem nas aulas, em uma linha cada.</p>
+    <div class="glossary">
+      <div class="term"><span class="k">Servidor web</span><span class="d">O programa que recebe pedidos de páginas/APIs e devolve a resposta.</span></div>
+      <div class="term"><span class="k">Nginx / Apache</span><span class="d">Os dois servidores web mais usados do mundo. O Nginx é leve e ótimo como "porteiro".</span></div>
+      <div class="term"><span class="k">Reverse proxy</span><span class="full">proxy reverso</span><span class="d">Um "porteiro" na frente dos servidores: recebe tudo de fora e repassa para os de trás.</span></div>
+      <div class="term"><span class="k">Forward proxy</span><span class="d">O contrário: um intermediário do lado do cliente (ex.: o proxy da empresa).</span></div>
+      <div class="term"><span class="k">upstream</span><span class="d">No Nginx, o "grupo de servidores de trás" para onde ele distribui o tráfego.</span></div>
+      <div class="term"><span class="k">Round Robin</span><span class="d">Método de balanceamento: reveza os servidores em ordem, um de cada vez.</span></div>
+      <div class="term"><span class="k">Least Connections</span><span class="d">Manda a requisição para o servidor <em>menos ocupado</em> no momento.</span></div>
+      <div class="term"><span class="k">IP Hash</span><span class="d">Faz o mesmo cliente cair sempre no mesmo servidor (persistência de sessão).</span></div>
+      <div class="term"><span class="k">Health check</span><span class="d">Checagem que diz se um servidor está saudável para receber tráfego.</span></div>
+      <div class="term"><span class="k">Failover</span><span class="d">Desviar o tráfego automaticamente para os saudáveis quando um servidor cai.</span></div>
+      <div class="term"><span class="k">Ingress Controller</span><span class="d">O "porteiro" do Kubernetes: lê as regras de rota e distribui o tráfego.</span></div>
+      <div class="term"><span class="k">TLS / SSL / HTTPS</span><span class="d">A criptografia do "cadeadinho" — o tráfego viaja embaralhado e seguro.</span></div>
+      <div class="term"><span class="k">cert-manager</span><span class="d">Ferramenta do Kubernetes que emite e renova certificados HTTPS sozinha.</span></div>
+      <div class="term"><span class="k">Let's Encrypt</span><span class="d">Autoridade que emite certificados HTTPS de graça (usada pelo cert-manager).</span></div>
+      <div class="term"><span class="k">Service Mesh</span><span class="full">malha de serviços</span><span class="d">Uma camada que controla toda a comunicação entre os microsserviços.</span></div>
+      <div class="term"><span class="k">Istio</span><span class="d">O Service Mesh mais popular. Coloca um mini-proxy ao lado de cada serviço.</span></div>
+      <div class="term"><span class="k">sidecar</span><span class="d">Esse mini-proxy "de carona" ao lado do app, que intercepta o tráfego dele.</span></div>
+      <div class="term"><span class="k">mTLS</span><span class="full">mutual TLS</span><span class="d">Criptografia em que os dois lados provam quem são — comunicação interna blindada.</span></div>
+      <div class="term"><span class="k">Canary / A/B</span><span class="d">Mandar só uma fatia do tráfego para a versão nova, para testar com segurança.</span></div>
+      <div class="term"><span class="k">Observabilidade</span><span class="d">"Enxergar" o sistema por dentro: métricas, logs e rastreamento (Grafana, Jaeger, Kiali).</span></div>
+      <div class="term"><span class="k">HA</span><span class="full">High Availability · Alta Disponibilidade</span><span class="d">Manter o sistema no ar mesmo quando algo falha.</span></div>
+      <div class="term"><span class="k">SPOF</span><span class="full">Single Point of Failure</span><span class="d">Ponto único de falha: algo que, se cair, derruba tudo. O inimigo da HA.</span></div>
+      <div class="term"><span class="k">WAF</span><span class="full">Web Application Firewall</span><span class="d">"Firewall de aplicação": barra ataques web antes de chegarem no app.</span></div>
+      <div class="term"><span class="k">ModSecurity / OWASP CRS</span><span class="d">Um WAF popular + um conjunto de regras prontas contra ataques conhecidos.</span></div>
+      <div class="term"><span class="k">Rate limiting</span><span class="d">Limitar quantas requisições um cliente pode fazer (freia força bruta e abuso).</span></div>
+      <div class="term"><span class="k">SQL Injection / XSS</span><span class="d">Ataques clássicos: injetar comandos no banco / injetar script malicioso na página.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>As 5 aulas, uma a uma</h2>
+    <div class="section-rule"></div>
+    <p class="lead">Cada ficha tem o mesmo esqueleto: em palavras simples, para que serve, um caso de uso e a conexão com o ToggleMaster.</p>
+
+    <div class="lessons">
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">01</span><div>
+          <h3>Servidores Web com Nginx e Apache</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Um <strong>servidor web</strong> é o programa que recebe o pedido de uma página/API e devolve a resposta. Os dois mais famosos são o <strong>Apache</strong> e o <strong>Nginx</strong>.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>Reverse proxy</strong> (um "porteiro" que fica na frente e repassa para os servidores de trás) vs <strong>forward proxy</strong> (intermediário do lado do cliente); cache; <strong>SSL/TLS</strong>.</dd></div>
+          <div><dt>Para que serve</dt><dd>Entregar conteúdo web com desempenho e ter um "porteiro" único que centraliza a entrada, o cache e a segurança.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Um Nginx na frente de vários apps, cuidando do cache e do HTTPS para todos eles.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Usamos o <strong>Nginx</strong> (via Nginx Ingress) como o <strong>reverse proxy</strong> — o porteiro da nossa aplicação no cluster.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">02</span><div>
+          <h3>Balanceamento de Carga na Prática</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Como o balanceador <strong>distribui as requisições</strong> entre vários servidores — e o que ele faz quando um deles cai (<strong>failover</strong>).</dd></div>
+          <div><dt>Siglas e termos</dt><dd>Métodos: <strong>Round Robin</strong> (reveza igual), <strong>Least Connections</strong> (manda pro menos ocupado), <strong>IP Hash</strong> (mesmo cliente sempre no mesmo servidor). <strong>Health check</strong>, <strong>failover</strong> e o bloco <code>upstream</code> do Nginx.</dd></div>
+          <div><dt>Para que serve</dt><dd>Alta disponibilidade: nenhum servidor sobrecarrega e o sistema continua no ar mesmo se um falhar.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">3 servidores no <code>upstream</code>; um trava; o Nginx percebe (health check) e passa a mandar tráfego só para os 2 saudáveis.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">O <strong>Nginx Ingress</strong> + o <strong>Service do Kubernetes</strong> fazem esse balanceamento entre os pods; o <em>health check</em> são as <code>readinessProbe</code>. Se um pod cai, o tráfego vai para os outros.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">03</span><div>
+          <h3>Gerenciamento de Tráfego no Kubernetes</h3>
+          <span class="badge ok">Usamos (sem TLS)</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>O <strong>Nginx Ingress Controller</strong> como porta de entrada do cluster, roteando por <strong>host e caminho (path)</strong>, e como proteger tudo com HTTPS.</dd></div>
+          <div><dt>Siglas e termos</dt><dd>Roteamento por host/path, <strong>URL rewrite</strong>, <strong>TLS</strong>, <strong>cert-manager</strong>, <strong>Let's Encrypt</strong>, <strong>ClusterIssuer</strong>, HTTPS.</dd></div>
+          <div><dt>Para que serve</dt><dd>Expor vários serviços por URLs organizadas, de um jeito só, e com certificados HTTPS emitidos e renovados automaticamente.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use"><code>/api</code> → serviço A, <code>/web</code> → serviço B, tudo com HTTPS que o cert-manager renova sozinho.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">É <strong>exatamente o nosso <code>ingress.yaml</code></strong>: roteamos <code>/evaluate</code>, <code>/flags</code>, <code>/rules</code>, <code>/validate</code> e <code>/admin</code>. A única parte que ficou de fora foi o <strong>TLS/cert-manager</strong> — a demo rodou em HTTP.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">04</span><div>
+          <h3>Controle de Tráfego com Service Mesh (Istio)</h3>
+          <span class="badge no">Não usamos</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Uma "malha" que coloca um <strong>mini-proxy (sidecar)</strong> ao lado de cada serviço e assume o controle <strong>fino</strong> do tráfego entre eles.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>Service Mesh</strong>, <strong>Istio</strong>, <strong>sidecar</strong>, <strong>mTLS</strong> (criptografia mútua entre serviços), <strong>VirtualService/DestinationRule</strong>, <strong>Canary/A/B</strong>, observabilidade (Grafana, Jaeger, Kiali).</dd></div>
+          <div><dt>Para que serve</dt><dd>Controle avançado (canary, A/B), segurança interna automática (mTLS) e observabilidade profunda — em sistemas com muitos microsserviços.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Mandar 10% do tráfego para a v2 (canary) e ver as métricas de cada serviço numa tela só.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Não usamos — é a camada avançada, além do que o desafio pedia. O nosso Nginx Ingress já resolvia o roteamento que precisávamos.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">05</span><div>
+          <h3>Alta Disponibilidade (HA) e Segurança</h3>
+          <span class="badge warn">Usamos em parte</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Eliminar <strong>pontos únicos de falha</strong> (nada que, se cair, derrube tudo) e <strong>blindar</strong> a aplicação contra ataques.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>HA</strong> (Alta Disponibilidade), <strong>SPOF</strong> (ponto único de falha), failover, <strong>WAF</strong> (firewall de aplicação), <strong>ModSecurity</strong> + <strong>OWASP CRS</strong>, <strong>rate limiting</strong>, <strong>SQL Injection</strong>, <strong>XSS</strong>.</dd></div>
+          <div><dt>Para que serve</dt><dd>Manter o sistema no ar mesmo com falhas e barrar ataques web comuns antes que cheguem no app.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Um WAF bloqueia uma tentativa de SQL Injection (devolve <code>403</code>); o rate limiting corta um ataque de força bruta no <code>/login</code>.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Em parte: temos <strong>HA básica</strong> (múltiplos pods, 2 nós em 2 zonas, Load Balancer). Mas <strong>não</strong> montamos WAF, rate limiting nem HTTPS — ficam como evolução de produção.</dd></div>
+        </dl>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Resumo rápido</h2>
+    <div class="section-rule"></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>Tema</th><th>Palavra-chave</th><th>No ToggleMaster</th></tr></thead>
+        <tbody>
+          <tr><td><span class="num2">01</span></td><td>Servidores web</td><td>Nginx · reverse proxy</td><td><span class="s ok">USAMOS (Nginx)</span></td></tr>
+          <tr><td><span class="num2">02</span></td><td>Balanceamento de carga</td><td>Round Robin · health check</td><td><span class="s ok">USAMOS</span></td></tr>
+          <tr><td><span class="num2">03</span></td><td>Tráfego no Kubernetes</td><td>Ingress · TLS · cert-manager</td><td><span class="s ok">USAMOS (sem TLS)</span></td></tr>
+          <tr><td><span class="num2">04</span></td><td>Service Mesh</td><td>Istio · sidecar · mTLS</td><td><span class="s no">NÃO</span></td></tr>
+          <tr><td><span class="num2">05</span></td><td>Alta disponibilidade + segurança</td><td>HA · WAF · rate limiting</td><td><span class="s warn">EM PARTE</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Guia de estudo do módulo <strong>Servidores Web e Balanceamento de Carga</strong> (FIAP · Tech Challenge Fase 2), organizado a partir do material das 5 aulas e conectado ao projeto <strong>ToggleMaster</strong>. Linguagem simplificada para leigos.
+  </footer>
+</main>

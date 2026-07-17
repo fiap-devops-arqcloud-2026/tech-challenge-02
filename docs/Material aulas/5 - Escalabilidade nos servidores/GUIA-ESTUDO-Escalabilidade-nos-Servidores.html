@@ -1,0 +1,280 @@
+<title>Escalabilidade nos Servidores — Guia para Leigos</title>
+<style>
+  :root{
+    --bg:#eef2f8; --surface:#ffffff; --surface-2:#e7eef7; --panel:#f5f8fc;
+    --ink:#132339; --ink-soft:#4c5f79; --ink-faint:#7787a0;
+    --line:#d3ddea; --line-soft:#e2e9f2;
+    --accent:#2f6ae0; --accent-ink:#1c4aa8; --accent-wash:#e7eefb;
+    --brass:#b26a10; --brass-wash:#f6ecdd;
+    --ok:#2c8159; --warn:#a9741a; --no:#7a869a;
+    --serif:Georgia,"Iowan Old Style","Palatino Linotype","Times New Roman",serif;
+    --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --mono:"Cascadia Code",Consolas,"SFMono-Regular",ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0c1725; --surface:#152539; --surface-2:#101f31; --panel:#132234;
+      --ink:#e6edf6; --ink-soft:#a4b6cc; --ink-faint:#7488a2;
+      --line:#26394f; --line-soft:#1d2d40;
+      --accent:#6c9cf1; --accent-ink:#9cbdf8; --accent-wash:#16273f;
+      --brass:#e0a552; --brass-wash:#241c11;
+      --ok:#59bf8c; --warn:#e0a552; --no:#7f8aa0;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0c1725; --surface:#152539; --surface-2:#101f31; --panel:#132234;
+    --ink:#e6edf6; --ink-soft:#a4b6cc; --ink-faint:#7488a2;
+    --line:#26394f; --line-soft:#1d2d40;
+    --accent:#6c9cf1; --accent-ink:#9cbdf8; --accent-wash:#16273f;
+    --brass:#e0a552; --brass-wash:#241c11;
+    --ok:#59bf8c; --warn:#e0a552; --no:#7f8aa0;
+  }
+  :root[data-theme="light"]{
+    --bg:#eef2f8; --surface:#ffffff; --surface-2:#e7eef7; --panel:#f5f8fc;
+    --ink:#132339; --ink-soft:#4c5f79; --ink-faint:#7787a0;
+    --line:#d3ddea; --line-soft:#e2e9f2;
+    --accent:#2f6ae0; --accent-ink:#1c4aa8; --accent-wash:#e7eefb;
+    --brass:#b26a10; --brass-wash:#f6ecdd;
+    --ok:#2c8159; --warn:#a9741a; --no:#7a869a;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:clamp(20px,4vw,52px) clamp(16px,4vw,32px)}
+
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:22px;margin-bottom:34px}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent-ink);margin:0 0 12px}
+  .masthead h1{font-family:var(--serif);font-weight:700;font-size:clamp(2rem,6vw,3.1rem);
+    line-height:1.05;margin:0;text-wrap:balance;letter-spacing:-.01em}
+  .masthead .sub{font-size:clamp(1rem,2.4vw,1.18rem);color:var(--ink-soft);
+    margin:.5em 0 0;max-width:62ch}
+  .meta{font-family:var(--mono);font-size:.74rem;color:var(--ink-faint);margin-top:16px;
+    display:flex;flex-wrap:wrap;gap:6px 18px}
+
+  h2{font-family:var(--serif);font-weight:700;font-size:clamp(1.4rem,3.4vw,1.9rem);
+    margin:52px 0 6px;letter-spacing:-.01em;text-wrap:balance}
+  .section-rule{height:3px;width:56px;background:var(--accent);border-radius:2px;margin:14px 0 24px}
+  p{max-width:68ch}
+  .lead{color:var(--ink-soft);margin:0 0 22px;max-width:66ch}
+  strong{color:var(--ink)}
+
+  .intro{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+  @media(max-width:620px){.intro{grid-template-columns:1fr}}
+  .intro .box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  .intro .box h3{margin:0 0 8px;font-size:1.05rem;font-family:var(--sans);font-weight:700}
+  .intro .box p{margin:0;font-size:.96rem;color:var(--ink-soft);max-width:none}
+  .intro .box.hi{border-color:var(--brass);background:var(--brass-wash)}
+
+  .glossary{background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;
+    padding:clamp(16px,3vw,26px);display:grid;grid-template-columns:1fr 1fr;gap:2px 26px}
+  @media(max-width:640px){.glossary{grid-template-columns:1fr}}
+  .term{padding:11px 0;border-bottom:1px solid var(--line-soft)}
+  .term .k{font-family:var(--mono);font-weight:700;color:var(--accent-ink);font-size:.92rem}
+  .term .full{font-style:italic;color:var(--ink-faint);font-size:.86rem;margin-left:6px}
+  .term .d{display:block;color:var(--ink-soft);font-size:.94rem;margin-top:2px}
+
+  .lessons{display:flex;flex-direction:column;gap:18px}
+  .lesson{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:clamp(18px,3vw,26px);transition:border-color .18s ease}
+  .lesson:hover{border-color:var(--accent)}
+  .lesson-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
+  .num{font-family:var(--serif);font-size:2.1rem;font-weight:700;line-height:1;
+    color:var(--accent);min-width:1.6em;font-variant-numeric:tabular-nums}
+  .lesson-head h3{margin:2px 0 8px;font-size:clamp(1.12rem,2.6vw,1.3rem);
+    font-family:var(--sans);font-weight:700;line-height:1.25}
+  .badge{display:inline-block;font-family:var(--mono);font-size:.68rem;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid currentColor}
+  .badge.ok{color:var(--ok)} .badge.warn{color:var(--warn)} .badge.no{color:var(--no)}
+
+  .facets{margin:0;display:grid;gap:14px}
+  .facets > div{display:grid;grid-template-columns:150px 1fr;gap:4px 18px;align-items:baseline}
+  @media(max-width:600px){.facets > div{grid-template-columns:1fr}}
+  .facets dt{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--accent-ink);margin:0}
+  .facets dd{margin:0;color:var(--ink-soft);font-size:.97rem}
+  .facets dd.proj{color:var(--ink)}
+  .facets .use{color:var(--brass)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--accent-wash);
+    color:var(--accent-ink);padding:1px 6px;border-radius:5px}
+
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:.92rem}
+  th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line-soft)}
+  thead th{background:var(--surface-2);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  tbody tr:last-child td{border-bottom:none}
+  td .s{font-family:var(--mono);font-size:.78rem;font-weight:700}
+  td .s.ok{color:var(--ok)} td .s.warn{color:var(--warn)} td .s.no{color:var(--no)}
+  td .num2{font-family:var(--serif);font-weight:700;color:var(--accent)}
+
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--ink-faint);font-size:.86rem}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<main class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">Módulo 5 · DevOps e Arquitetura Cloud · FIAP</p>
+    <h1>Escalabilidade nos Servidores</h1>
+    <p class="sub">Como fazer um sistema aguentar milhões de acessos sem cair — em 6 aulas, com o significado de cada sigla, para que serve e um exemplo real do nosso projeto.</p>
+    <div class="meta"><span>Guia de estudo</span><span>6 aulas</span><span>+ glossário de siglas</span><span>+ conexão com o ToggleMaster</span></div>
+  </header>
+
+  <section>
+    <div class="intro">
+      <div class="box">
+        <h3>O que é escalabilidade?</h3>
+        <p>É a capacidade de um sistema <strong>crescer para aguentar mais demanda</strong> sem sair do ar. Cuidado: escalar (aguentar mais gente) é diferente de <em>otimizar</em> (deixar mais rápido). Um app que "viraliza" e cai é um caso clássico de falha de escala.</p>
+      </div>
+      <div class="box hi">
+        <h3>Por que este módulo é especial pra nós</h3>
+        <p>O <strong>ToggleMaster é praticamente o estudo de caso deste módulo</strong>: microsserviços, apps sem estado (stateless), fila para desacoplar (SQS), cache para aliviar o banco (Redis) e load balancer. Quase toda aula tem um "sim, fizemos isso".</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Glossário — o significado das siglas</h2>
+    <div class="section-rule"></div>
+    <p class="lead">Todos os termos e siglas que aparecem nas aulas, em uma linha cada.</p>
+    <div class="glossary">
+      <div class="term"><span class="k">Escala vertical</span><span class="d">Trocar por uma máquina <em>maior</em> (mais CPU/RAM). Simples, mas tem teto.</span></div>
+      <div class="term"><span class="k">Escala horizontal</span><span class="d">Adicionar <em>mais máquinas iguais</em>. É o padrão da nuvem (quase infinito).</span></div>
+      <div class="term"><span class="k">Load Balancer</span><span class="full">balanceador de carga</span><span class="d">Distribui as requisições entre vários servidores e desvia dos que estão doentes.</span></div>
+      <div class="term"><span class="k">L4 / L7</span><span class="full">camada 4 / camada 7</span><span class="d">LB "burro e rápido" (por IP/porta) vs LB "inteligente" (entende URL/HTTP).</span></div>
+      <div class="term"><span class="k">Health check</span><span class="d">A checagem que diz se um servidor está saudável para receber tráfego.</span></div>
+      <div class="term"><span class="k">Stateless</span><span class="full">sem estado</span><span class="d">App que não guarda dados na própria memória — qualquer cópia atende qualquer usuário. A "regra de ouro" da escala horizontal.</span></div>
+      <div class="term"><span class="k">Stateful</span><span class="full">com estado</span><span class="d">O oposto: guarda dados localmente (ex.: um banco de dados).</span></div>
+      <div class="term"><span class="k">Fila / Queue</span><span class="d">Uma "caixa de mensagens" que desacopla partes do sistema e absorve picos.</span></div>
+      <div class="term"><span class="k">CDN</span><span class="full">Content Delivery Network</span><span class="d">Rede que guarda cópias do conteúdo perto do usuário, no mundo todo.</span></div>
+      <div class="term"><span class="k">Origin / Edge</span><span class="d">Origin = seu servidor original; Edge = os pontos da CDN espalhados pelo globo.</span></div>
+      <div class="term"><span class="k">Latência</span><span class="d">O tempo que os dados levam para ir e voltar (quanto mais longe, maior).</span></div>
+      <div class="term"><span class="k">Cache</span><span class="d">Guardar uma resposta pronta por um tempo, para não recalcular/reconsultar.</span></div>
+      <div class="term"><span class="k">Read replica</span><span class="full">réplica de leitura</span><span class="d">Cópia do banco só para leitura — aguenta muitas consultas.</span></div>
+      <div class="term"><span class="k">Sharding</span><span class="d">Partir o banco em vários pedaços para dividir a carga de escrita.</span></div>
+      <div class="term"><span class="k">CAP</span><span class="full">Consistency, Availability, Partition tolerance</span><span class="d">Teorema: num sistema distribuído, não dá para ter os três ao mesmo tempo — escolha 2.</span></div>
+      <div class="term"><span class="k">ACID</span><span class="d">As garantias fortes dos bancos relacionais (transações confiáveis).</span></div>
+      <div class="term"><span class="k">SQL / NoSQL</span><span class="d">Bancos relacionais (tabelas) vs não-relacionais (escala mais fácil, regras mais soltas).</span></div>
+      <div class="term"><span class="k">Serverless</span><span class="d">"Sem servidor": você roda código sem gerenciar máquina (ex.: AWS Lambda, SQS, DynamoDB).</span></div>
+      <div class="term"><span class="k">Monolito / Microsserviços</span><span class="d">Um sistema único e grande vs vários serviços pequenos e independentes.</span></div>
+      <div class="term"><span class="k">Observabilidade</span><span class="d">Conseguir "enxergar" o sistema por dentro: métricas, logs e rastreamento.</span></div>
+      <div class="term"><span class="k">SLA</span><span class="full">Service Level Agreement</span><span class="d">Acordo de nível de serviço (ex.: "99,9% do tempo no ar").</span></div>
+      <div class="term"><span class="k">CloudFront</span><span class="d">A CDN da AWS.</span></div>
+      <div class="term"><span class="k">ELB</span><span class="full">Elastic Load Balancer</span><span class="d">O load balancer gerenciado da AWS (o que o nosso Nginx criou).</span></div>
+      <div class="term"><span class="k">HPA</span><span class="full">Horizontal Pod Autoscaler</span><span class="d">Cria/remove pods conforme a CPU — a escala horizontal automática do Kubernetes.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>As 6 aulas, uma a uma</h2>
+    <div class="section-rule"></div>
+    <p class="lead">Cada ficha tem o mesmo esqueleto: em palavras simples, para que serve, um caso de uso e a conexão com o ToggleMaster.</p>
+
+    <div class="lessons">
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">01</span><div>
+          <h3>Fundamentos de Escalabilidade Moderna</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Escalar = aguentar <strong>mais gente</strong> sem cair — e isso é diferente de "otimizar" (deixar mais rápido). Há duas formas de crescer.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>Escala vertical</strong> (uma máquina maior — tem teto e fica caro) vs <strong>escala horizontal</strong> (mais máquinas iguais — o jeito da nuvem). Sempre há trade-off entre performance, custo e complexidade.</dd></div>
+          <div><dt>Para que serve</dt><dd>Escolher a estratégia certa de crescimento antes que o sistema caia num pico.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Um app viraliza e milhões acessam ao mesmo tempo → escala horizontal (adicionar servidores) segura a multidão.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Escalamos <strong>horizontalmente</strong>: mais pods (pelo <code>HPA</code>) e mais máquinas (pelo node group 1→4). É exatamente a escolha da aula.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">02</span><div>
+          <h3>Load Balancers na Prática</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>O "maestro" que distribui as requisições entre vários servidores, para nenhum sobrecarregar — e que desvia dos servidores doentes.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>L4</strong> (rápido, distribui por IP/porta) vs <strong>L7</strong> (inteligente, entende HTTP e roteia por URL); <strong>health check</strong> (checar se o servidor está saudável); algoritmos como <em>round-robin</em>.</dd></div>
+          <div><dt>Para que serve</dt><dd>Alta disponibilidade (se um servidor cai, o tráfego vai para os outros) e deploys sem downtime.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">5 servidores atrás de um LB; um deles cai e o usuário nem percebe — o LB manda o tráfego para os 4 saudáveis.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Temos <strong>dois níveis</strong>: o <strong>ELB da AWS</strong> na frente (criado pelo Nginx Ingress) e o <strong>Service do Kubernetes</strong> distribuindo entre os pods. O <em>health check</em> são as nossas <code>readinessProbe</code>.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">03</span><div>
+          <h3>Padrões de Escala Horizontal em Arquiteturas Cloud</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Para escalar horizontal de verdade, o app precisa ser <strong>stateless</strong> (sem "memória" local — a regra de ouro). E as partes devem ser <strong>desacopladas</strong> com filas, para uma parte lenta não travar o resto.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>Stateless</strong> (sem estado local), <strong>desacoplamento</strong>, <strong>fila de mensagens</strong>, resiliência (falha isolada não derruba tudo).</dd></div>
+          <div><dt>Para que serve</dt><dd>Qualquer servidor atende qualquer usuário; picos são absorvidos pela fila; um componente com defeito não leva o sistema inteiro junto.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">O processamento pesado (ex.: pagamento) vai para uma fila; o resto do site continua rápido e a fila processa no seu ritmo.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Padrão aplicado à risca: nossos serviços são <strong>stateless</strong> (o estado mora no RDS/Redis/DynamoDB) e usamos o <strong>SQS</strong> para desacoplar — o <code>evaluation</code> joga o evento na fila e segue; o <code>analytics</code> processa depois.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">04</span><div>
+          <h3>CDNs e Performance Global</h3>
+          <span class="badge no">Não usamos</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Uma <strong>CDN</strong> guarda cópias do seu conteúdo em servidores espalhados pelo mundo (a "borda"), para o usuário baixar do ponto mais perto dele — bem mais rápido.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>CDN</strong> (Content Delivery Network), <strong>Origin</strong> (servidor original), <strong>Edge</strong> (os pontos de borda), <strong>latência</strong>, <strong>CloudFront</strong> (a CDN da AWS).</dd></div>
+          <div><dt>Para que serve</dt><dd>Entregar conteúdo rápido para usuários em qualquer lugar do planeta e aliviar o servidor de origem.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Um vídeo ou imagem servido de um edge em Lisboa para o usuário português, em vez de atravessar o oceano desde o Brasil.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Não usamos: nosso sistema é uma <strong>API</strong> (respostas dinâmicas <code>true</code>/<code>false</code>), não conteúdo estático. CDN brilha em sites com imagens, vídeos e arquivos.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">05</span><div>
+          <h3>Escalabilidade de Banco de Dados</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>O banco é o "chefão" da escala — difícil de crescer porque guarda o <strong>estado</strong> e precisa manter tudo consistente.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>Read replica</strong> (cópia só-leitura p/ aguentar muitas consultas), <strong>Sharding</strong> (partir o banco p/ dividir as escritas), <strong>CAP</strong> (não dá p/ ter consistência + disponibilidade + tolerância a falha de rede ao mesmo tempo), <strong>SQL vs NoSQL</strong>, e o velho amigo <strong>cache</strong>.</dd></div>
+          <div><dt>Para que serve</dt><dd>Fazer o banco aguentar mais leituras e escritas sem virar o gargalo do sistema.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Muitas leituras? Coloca um <strong>cache</strong> na frente para nem chegar ao banco — ou adiciona réplicas de leitura.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Usamos <strong>RDS</strong> (gerenciado, permite réplicas), <strong>Redis (cache)</strong> na frente do <code>evaluation</code> — que é literalmente "escalar leitura com cache" — e <strong>DynamoDB</strong> (NoSQL) para o analytics.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">06</span><div>
+          <h3>Arquiteturas Escaláveis no Mundo Real</h3>
+          <span class="badge ok">É o nosso projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>A aula que junta tudo. Compara os grandes modelos — <strong>Serverless</strong>, <strong>Microsserviços vs Monolito</strong> — e mostra como <strong>enxergar</strong> um sistema gigante (observabilidade).</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>Serverless</strong> (código sem gerenciar servidor), <strong>Microsserviços</strong> vs <strong>Monolito</strong>, <strong>observabilidade</strong> (métricas, logs, rastreamento).</dd></div>
+          <div><dt>Para que serve</dt><dd>Escolher o paradigma certo e conseguir monitorar sistemas com milhares de servidores.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Um e-commerce monolítico que caiu no pico → quebrar em microsserviços, com load balancer, fila, cache e banco escalável.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Nosso projeto <strong>é a resposta desta aula</strong>: migramos um <strong>monolito</strong> (Fase 1) para <strong>5 microsserviços</strong>, com LB, fila (SQS), cache (Redis), pedaços <em>serverless</em> (SQS + DynamoDB) e observabilidade básica (Metrics Server + HPA).</dd></div>
+        </dl>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Resumo rápido</h2>
+    <div class="section-rule"></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>Tema</th><th>Palavra-chave</th><th>No ToggleMaster</th></tr></thead>
+        <tbody>
+          <tr><td><span class="num2">01</span></td><td>Fundamentos de escala</td><td>Vertical vs Horizontal</td><td><span class="s ok">USAMOS (horizontal)</span></td></tr>
+          <tr><td><span class="num2">02</span></td><td>Load Balancers</td><td>L4/L7 · health check</td><td><span class="s ok">USAMOS (ELB + Service)</span></td></tr>
+          <tr><td><span class="num2">03</span></td><td>Padrões de escala horizontal</td><td>Stateless · fila</td><td><span class="s ok">USAMOS (SQS)</span></td></tr>
+          <tr><td><span class="num2">04</span></td><td>CDN / performance global</td><td>CDN · CloudFront</td><td><span class="s no">NÃO (é uma API)</span></td></tr>
+          <tr><td><span class="num2">05</span></td><td>Escala de banco de dados</td><td>Réplica · cache · CAP</td><td><span class="s ok">USAMOS (Redis + RDS)</span></td></tr>
+          <tr><td><span class="num2">06</span></td><td>Arquiteturas no mundo real</td><td>Microsserviços · serverless</td><td><span class="s ok">É O PROJETO</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Guia de estudo do módulo <strong>Escalabilidade nos Servidores</strong> (FIAP · Tech Challenge Fase 2), organizado a partir do material das 6 aulas e conectado ao projeto <strong>ToggleMaster</strong>. Linguagem simplificada para leigos.
+  </footer>
+</main>

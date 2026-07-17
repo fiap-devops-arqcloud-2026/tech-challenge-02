@@ -1,0 +1,336 @@
+<title>Kubernetes Avançado — Guia para Leigos</title>
+<style>
+  :root{
+    --bg:#eef2f8; --surface:#ffffff; --surface-2:#e7eef7; --panel:#f5f8fc;
+    --ink:#132339; --ink-soft:#4c5f79; --ink-faint:#7787a0;
+    --line:#d3ddea; --line-soft:#e2e9f2;
+    --accent:#2f6ae0; --accent-ink:#1c4aa8; --accent-wash:#e7eefb;
+    --brass:#b26a10; --brass-wash:#f6ecdd;
+    --ok:#2c8159; --warn:#a9741a; --no:#7a869a;
+    --serif:Georgia,"Iowan Old Style","Palatino Linotype","Times New Roman",serif;
+    --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --mono:"Cascadia Code",Consolas,"SFMono-Regular",ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0c1725; --surface:#152539; --surface-2:#101f31; --panel:#132234;
+      --ink:#e6edf6; --ink-soft:#a4b6cc; --ink-faint:#7488a2;
+      --line:#26394f; --line-soft:#1d2d40;
+      --accent:#6c9cf1; --accent-ink:#9cbdf8; --accent-wash:#16273f;
+      --brass:#e0a552; --brass-wash:#241c11;
+      --ok:#59bf8c; --warn:#e0a552; --no:#7f8aa0;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0c1725; --surface:#152539; --surface-2:#101f31; --panel:#132234;
+    --ink:#e6edf6; --ink-soft:#a4b6cc; --ink-faint:#7488a2;
+    --line:#26394f; --line-soft:#1d2d40;
+    --accent:#6c9cf1; --accent-ink:#9cbdf8; --accent-wash:#16273f;
+    --brass:#e0a552; --brass-wash:#241c11;
+    --ok:#59bf8c; --warn:#e0a552; --no:#7f8aa0;
+  }
+  :root[data-theme="light"]{
+    --bg:#eef2f8; --surface:#ffffff; --surface-2:#e7eef7; --panel:#f5f8fc;
+    --ink:#132339; --ink-soft:#4c5f79; --ink-faint:#7787a0;
+    --line:#d3ddea; --line-soft:#e2e9f2;
+    --accent:#2f6ae0; --accent-ink:#1c4aa8; --accent-wash:#e7eefb;
+    --brass:#b26a10; --brass-wash:#f6ecdd;
+    --ok:#2c8159; --warn:#a9741a; --no:#7a869a;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:clamp(20px,4vw,52px) clamp(16px,4vw,32px)}
+
+  /* Masthead */
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:22px;margin-bottom:34px}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent-ink);margin:0 0 12px}
+  .masthead h1{font-family:var(--serif);font-weight:700;font-size:clamp(2rem,6vw,3.1rem);
+    line-height:1.05;margin:0;text-wrap:balance;letter-spacing:-.01em}
+  .masthead .sub{font-size:clamp(1rem,2.4vw,1.18rem);color:var(--ink-soft);
+    margin:.5em 0 0;max-width:60ch}
+  .meta{font-family:var(--mono);font-size:.74rem;color:var(--ink-faint);margin-top:16px;
+    display:flex;flex-wrap:wrap;gap:6px 18px}
+
+  h2{font-family:var(--serif);font-weight:700;font-size:clamp(1.4rem,3.4vw,1.9rem);
+    margin:52px 0 6px;letter-spacing:-.01em;text-wrap:balance}
+  h2 + .lead{color:var(--ink-soft);margin:0 0 22px;max-width:64ch}
+  .section-rule{height:3px;width:56px;background:var(--accent);border-radius:2px;margin:14px 0 24px}
+  p{max-width:68ch}
+  strong{color:var(--ink)}
+
+  /* Intro cards */
+  .intro{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+  @media(max-width:620px){.intro{grid-template-columns:1fr}}
+  .intro .box{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:20px 22px}
+  .intro .box h3{margin:0 0 8px;font-size:1.05rem;font-family:var(--sans);font-weight:700}
+  .intro .box p{margin:0;font-size:.96rem;color:var(--ink-soft);max-width:none}
+
+  /* Glossary */
+  .glossary{background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;
+    padding:clamp(16px,3vw,26px);display:grid;grid-template-columns:1fr 1fr;gap:2px 26px}
+  @media(max-width:640px){.glossary{grid-template-columns:1fr}}
+  .term{padding:11px 0;border-bottom:1px solid var(--line-soft)}
+  .term:last-child,.term:nth-last-child(2){border-bottom:none}
+  @media(max-width:640px){.term:nth-last-child(2){border-bottom:1px solid var(--line-soft)}}
+  .term .k{font-family:var(--mono);font-weight:700;color:var(--accent-ink);font-size:.92rem}
+  .term .full{font-style:italic;color:var(--ink-faint);font-size:.86rem;margin-left:6px}
+  .term .d{display:block;color:var(--ink-soft);font-size:.94rem;margin-top:2px}
+
+  /* Lessons */
+  .lessons{display:flex;flex-direction:column;gap:18px}
+  .lesson{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:clamp(18px,3vw,26px);transition:border-color .18s ease}
+  .lesson:hover{border-color:var(--accent)}
+  .lesson-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
+  .num{font-family:var(--serif);font-size:2.1rem;font-weight:700;line-height:1;
+    color:var(--accent);min-width:1.6em;font-variant-numeric:tabular-nums}
+  .lesson-head h3{margin:2px 0 8px;font-size:clamp(1.12rem,2.6vw,1.3rem);
+    font-family:var(--sans);font-weight:700;line-height:1.25}
+  .name-note{color:var(--ink-faint);font-weight:400;font-size:.9rem}
+  .badge{display:inline-block;font-family:var(--mono);font-size:.68rem;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:20px;
+    border:1px solid currentColor}
+  .badge.ok{color:var(--ok)} .badge.warn{color:var(--warn)} .badge.no{color:var(--no)}
+
+  .facets{margin:0;display:grid;gap:14px}
+  .facets > div{display:grid;grid-template-columns:150px 1fr;gap:4px 18px;align-items:baseline}
+  @media(max-width:600px){.facets > div{grid-template-columns:1fr}}
+  .facets dt{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--accent-ink);margin:0}
+  .facets dd{margin:0;color:var(--ink-soft);font-size:.97rem}
+  .facets dd.proj{color:var(--ink)}
+  .facets .use{color:var(--brass)}
+  code,.chip{font-family:var(--mono);font-size:.86em;background:var(--accent-wash);
+    color:var(--accent-ink);padding:1px 6px;border-radius:5px}
+
+  /* Table */
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:.92rem}
+  th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line-soft)}
+  thead th{background:var(--surface-2);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  tbody tr:last-child td{border-bottom:none}
+  td .s{font-family:var(--mono);font-size:.78rem;font-weight:700}
+  td .s.ok{color:var(--ok)} td .s.warn{color:var(--warn)} td .s.no{color:var(--no)}
+  td .num2{font-family:var(--serif);font-weight:700;color:var(--accent)}
+
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--ink-faint);font-size:.86rem}
+  a{color:var(--accent-ink)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<main class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">Módulo 4 · DevOps e Arquitetura Cloud · FIAP</p>
+    <h1>Kubernetes Avançado</h1>
+    <p class="sub">As 9 aulas explicadas do zero: o que cada sigla quer dizer, para que serve e um exemplo do mundo real — em linguagem que qualquer pessoa entende.</p>
+    <div class="meta"><span>Guia de estudo</span><span>9 aulas</span><span>+ glossário de siglas</span><span>+ conexão com o projeto ToggleMaster</span></div>
+  </header>
+
+  <section>
+    <div class="intro">
+      <div class="box">
+        <h3>O que é Kubernetes?</h3>
+        <p>É um "maestro" que organiza aplicações empacotadas em <strong>containers</strong> (caixinhas com o app + tudo que ele precisa). Ele decide onde cada app roda, reinicia o que quebra e cria mais cópias quando o movimento aperta. Apelido: <strong>K8s</strong> (K + 8 letras + s).</p>
+      </div>
+      <div class="box">
+        <h3>E o que é "Avançado"?</h3>
+        <p>É a <strong>versão profissional</strong> do que você viu no módulo básico. Mesmos conceitos, levados ao nível de produção: como atualizar sem derrubar o site, escalar de formas inteligentes e proteger tudo. Vários temas o nosso ToggleMaster já usou; outros foram pulados de propósito na "entrega enxuta".</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Glossário — o significado das siglas</h2>
+    <div class="section-rule"></div>
+    <p class="lead">Guarde esta lista à mão. Toda sigla que aparece nas aulas está aqui, em uma linha.</p>
+    <div class="glossary">
+      <div class="term"><span class="k">K8s</span><span class="full">Kubernetes</span><span class="d">O "maestro" que organiza os containers.</span></div>
+      <div class="term"><span class="k">Container</span><span class="d">Uma "caixa" com o app e tudo que ele precisa para rodar igual em qualquer lugar.</span></div>
+      <div class="term"><span class="k">Pod</span><span class="d">A menor "caixinha" do Kubernetes; roda 1 container (às vezes poucos).</span></div>
+      <div class="term"><span class="k">Node</span><span class="full">nó</span><span class="d">A máquina (servidor) onde os pods rodam.</span></div>
+      <div class="term"><span class="k">Deployment</span><span class="d">O "gerente" que mantém os pods no ar e atualiza versões.</span></div>
+      <div class="term"><span class="k">Service</span><span class="d">Um "endereço fixo" para achar os pods (que vivem mudando).</span></div>
+      <div class="term"><span class="k">Ingress</span><span class="d">A "portaria" que recebe URLs de fora e roteia para o serviço certo.</span></div>
+      <div class="term"><span class="k">YAML</span><span class="full">YAML Ain't Markup Language</span><span class="d">O formato dos arquivos de configuração (texto com recuos).</span></div>
+      <div class="term"><span class="k">CPU</span><span class="full">Central Processing Unit</span><span class="d">O processador — o "cérebro" da máquina.</span></div>
+      <div class="term"><span class="k">HPA</span><span class="full">Horizontal Pod Autoscaler</span><span class="d">Cria/remove <em>pods</em> conforme o uso de CPU sobe ou cai.</span></div>
+      <div class="term"><span class="k">KEDA</span><span class="full">Kubernetes Event-Driven Autoscaler</span><span class="d">Escala olhando <em>eventos</em> (ex.: tamanho de uma fila), não CPU.</span></div>
+      <div class="term"><span class="k">CRD</span><span class="full">Custom Resource Definition</span><span class="d">Um "tipo novo" de objeto que uma ferramenta acrescenta ao Kubernetes.</span></div>
+      <div class="term"><span class="k">RBAC</span><span class="full">Role-Based Access Control</span><span class="d">Controle de acesso: define quem pode fazer o quê.</span></div>
+      <div class="term"><span class="k">ServiceAccount</span><span class="d">A "identidade/crachá" de um app dentro do cluster.</span></div>
+      <div class="term"><span class="k">TLS</span><span class="full">Transport Layer Security</span><span class="d">A criptografia do "cadeadinho" dos sites (o "s" do https).</span></div>
+      <div class="term"><span class="k">cert-manager</span><span class="d">Ferramenta que emite e renova certificados TLS sozinha.</span></div>
+      <div class="term"><span class="k">GPU</span><span class="full">Graphics Processing Unit</span><span class="d">Placa de vídeo; usada em IA / Machine Learning.</span></div>
+      <div class="term"><span class="k">ML</span><span class="full">Machine Learning</span><span class="d">Aprendizado de máquina (IA que aprende com dados).</span></div>
+      <div class="term"><span class="k">QA</span><span class="full">Quality Assurance</span><span class="d">Garantia de qualidade — a etapa de testes.</span></div>
+      <div class="term"><span class="k">Helm</span><span class="d">O "gerenciador de pacotes" do Kubernetes (como uma loja de apps).</span></div>
+      <div class="term"><span class="k">Chart</span><span class="d">O "pacote" do Helm — um conjunto de YAMLs pronto para instalar.</span></div>
+      <div class="term"><span class="k">Karpenter</span><span class="d">Ferramenta da AWS que cria máquinas (nós) sob demanda, em segundos.</span></div>
+      <div class="term"><span class="k">Spot</span><span class="d">Máquinas da AWS com grande desconto (podem ser retomadas a qualquer hora).</span></div>
+      <div class="term"><span class="k">Probe</span><span class="full">sonda</span><span class="d">Uma "checagem de saúde" que o Kubernetes faz no app.</span></div>
+      <div class="term"><span class="k">Rollout</span><span class="d">O processo de "desenrolar" uma atualização de versão.</span></div>
+      <div class="term"><span class="k">DevOps</span><span class="full">Development + Operations</span><span class="d">Prática de unir quem desenvolve e quem opera o sistema.</span></div>
+      <div class="term"><span class="k">AWS</span><span class="full">Amazon Web Services</span><span class="d">A nuvem da Amazon (onde o projeto foi hospedado).</span></div>
+      <div class="term"><span class="k">SQS</span><span class="full">Simple Queue Service</span><span class="d">O serviço de <em>fila</em> da AWS (usado no nosso projeto).</span></div>
+      <div class="term"><span class="k">IAM</span><span class="full">Identity and Access Management</span><span class="d">O controle de acesso e identidades da AWS.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>As 9 aulas, uma a uma</h2>
+    <div class="section-rule"></div>
+    <p class="lead">Cada ficha tem o mesmo esqueleto: em palavras simples, para que serve, um caso de uso e se usamos no ToggleMaster.</p>
+
+    <div class="lessons">
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">01</span><div>
+          <h3>Saúde da Aplicação e Gerenciamento de Recursos</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>O Kubernetes fica "tomando o pulso" do seu app o tempo todo, e você reserva/limita quanto de máquina cada app pode usar.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>Probes (sondas):</strong> <em>Liveness</em> ("está travado? reinicia"), <em>Readiness</em> ("está pronto p/ receber tráfego?") e <em>Startup</em> ("protege apps de partida lenta"). <strong>Requests</strong> (reserva mínima) e <strong>Limits</strong> (teto máximo) de CPU e memória.</dd></div>
+          <div><dt>Para que serve</dt><dd>Manter o app confiável: reiniciar se travar, não mandar tráfego antes da hora e impedir que um app "coma" a máquina inteira.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Um app que às vezes trava sozinho: a <em>Liveness Probe</em> percebe e reinicia — sem ninguém precisar acordar de madrugada.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Usamos <code>readinessProbe</code> + <code>livenessProbe</code> (no <code>/health</code>) e <code>requests</code>/<code>limits</code> em todos os serviços. Só não usamos a <em>startup probe</em> (nossos apps sobem rápido).</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">02</span><div>
+          <h3>Agendamento Avançado e Comportamento de Nodes</h3>
+          <span class="badge no">Não precisamos</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Decidir <strong>em qual máquina</strong> cada app vai rodar — e o que fazer quando uma máquina fica sobrecarregada.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>Taint &amp; Toleration:</strong> a máquina "repele" apps e só aceita quem tem a "tolerância" certa. <strong>Node Affinity:</strong> o contrário — "atrair" o app para a máquina ideal. <strong>Eviction:</strong> o Kubernetes remove apps de uma máquina sob pressão para ela não cair.</dd></div>
+          <div><dt>Para que serve</dt><dd>Colocar cada carga no lugar certo (ex.: apps de IA só nas máquinas com GPU) e proteger as máquinas de sobrecarga.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Você tem máquinas caras com placa de vídeo (GPU) reservadas só para IA — usa <em>Taint</em> para nenhum app comum ocupá-las à toa.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Não precisamos: nossas 2 máquinas eram iguais (c7i-flex.large), sem hardware especial.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">03</span><div>
+          <h3>Estratégias de Atualização e Rollouts</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Como trocar a versão do app <strong>sem derrubar o serviço</strong>.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>Rolling Update:</strong> troca os pods aos poucos (sem downtime); <code>maxSurge</code>/<code>maxUnavailable</code> controlam o ritmo. <strong>Recreate:</strong> derruba tudo e sobe a nova (tem downtime, mas nunca mistura versões). Comandos: <code>kubectl rollout status / history / undo</code>.</dd></div>
+          <div><dt>Para que serve</dt><dd>Atualizar em produção com segurança — e poder <strong>voltar atrás</strong> (undo) se a nova versão der problema.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">100 pods na versão 1; você quer ir para a versão 2 sem os usuários perceberem → o <em>Rolling Update</em> troca de pouquinho em pouquinho.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Usamos o <em>Rolling Update</em> padrão (é o comportamento automático do <code>Deployment</code> quando aplicamos uma imagem nova).</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">04</span><div>
+          <h3>Gerenciador de Pacotes com Helm Charts</h3>
+          <span class="badge warn">Usamos em parte</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>O <strong>Helm</strong> é a "loja de apps" do Kubernetes; um <strong>Chart</strong> é o "pacote" pronto. A aula ensina a criar o <em>seu</em> pacote, com "moldes" (templates) e "opções" (values).</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>Helm</strong>, <strong>Chart</strong> (o pacote), <strong>template</strong> (molde), <strong>values</strong> (as opções ajustáveis), <strong>rollback</strong> (voltar versão).</dd></div>
+          <div><dt>Para que serve</dt><dd>Instalar coisas complexas com um comando e reaproveitar a mesma configuração em vários ambientes (dev/produção), mudando só os "valores".</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">A mesma app em dev e em produção, mudando só a senha e o tamanho → um Chart com dois conjuntos de <em>values</em>.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Usamos o Helm para <strong>instalar</strong> o Nginx Ingress (fomos "clientes da loja"), mas <strong>não criamos</strong> um Chart próprio — nossos 5 serviços foram com <code>kubectl apply</code> dos YAMLs.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">05</span><div>
+          <h3>Estratégias de Deploy Avançadas: Blue/Green</h3>
+          <span class="badge no">Não usamos</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Mantém <strong>dois ambientes idênticos</strong> — o "Azul" (atual) e o "Verde" (novo) — e vira a chave do tráfego de um para o outro num instante.</dd></div>
+          <div><dt>Para que serve</dt><dd>Atualizar sem downtime e com "desfazer" imediato: se a versão nova der ruim, é só virar a chave de volta.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Um banco que não pode ficar fora do ar: sobe a v2 no ambiente Verde, testa com calma, vira o tráfego. Deu problema? volta para o Azul em 1 segundo.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Não usamos — é uma técnica para produção crítica 24/7, além do que o desafio pedia.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">06</span><div>
+          <h3>Estratégias de Deploy Avançadas: Canary</h3>
+          <span class="badge no">Não usamos</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Solta a versão nova para uma <strong>fração pequena</strong> de usuários primeiro (o "canário"), observa, e vai aumentando aos poucos se estiver tudo bem.</dd></div>
+          <div><dt>De onde vem o nome</dt><dd>Dos canários que mineiros levavam para a mina: se o passarinho passava mal, era o alerta de gás tóxico antes de afetar todo mundo.</dd></div>
+          <div><dt>Para que serve</dt><dd>Descobrir bugs "no mundo real" afetando pouca gente, antes de liberar para todos.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Libera a v2 para 5% dos usuários; se os erros e a lentidão ficarem sob controle, sobe para 25%, 50%, 100%.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Não usamos — mas curiosidade: o nosso <strong>Nginx Ingress consegue fazer Canary</strong> por uma anotação simples.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">07</span><div>
+          <h3>Escalabilidade Avançada de Nodes com Karpenter</h3>
+          <span class="badge no">Não usamos</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Em vez de ter um número fixo de máquinas, o <strong>Karpenter</strong> cria a máquina <strong>sob medida, na hora</strong>, para os pods que estão esperando.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>Karpenter</strong> (ferramenta da AWS), <strong>Spot</strong> (máquinas com desconto), Cluster Autoscaler (o jeito antigo, mais lento).</dd></div>
+          <div><dt>Para que serve</dt><dd>Aguentar picos rápido e <strong>economizar</strong> — paga só a máquina do tamanho certo e usa Spot; empresas relatam até 30% de economia.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Uma loja na Black Friday: o tráfego explode; o Karpenter sobe máquinas em segundos e as remove quando a onda passa.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Não usamos — ficamos com um <em>node group</em> fixo (Mín 1 / Desejado 2 / Máx 4), o jeito tradicional. Karpenter é o nível avançado disso.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">08</span><div>
+          <h3>Escalabilidade Avançada de Aplicações com KEDA</h3>
+          <span class="badge warn">Combinava com o projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>O HPA "normal" escala olhando a <strong>CPU</strong>. O <strong>KEDA</strong> escala olhando <strong>eventos</strong> — como o tamanho de uma fila — e consegue chegar a <strong>zero pods</strong> quando não há nada para fazer.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>KEDA</strong> (autoescalador por eventos), <strong>ScaledObject</strong> (o <em>CRD</em>, a "regra" do KEDA), <em>scale-to-zero</em> (chegar a zero réplicas).</dd></div>
+          <div><dt>Para que serve</dt><dd>Escalar workers de fila do jeito certo (por mensagens pendentes, não por CPU) e economizar de verdade quando está parado.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Um worker que processa uma fila: 1 pod para cada 10 mensagens; fila vazia → 0 pods.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Era <strong>feito sob medida</strong> para o nosso <code>analytics-service</code> (que consome a fila <strong>SQS</strong>)! Mas usamos <strong>HPA por CPU</strong> e pulamos o KEDA de propósito — o PDF da FIAP marca como opcional (decisão D-006).</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">09</span><div>
+          <h3>Segurança no Cluster</h3>
+          <span class="badge warn">Usamos em parte</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Dar a cada app um "crachá" próprio, com só as permissões necessárias, e <strong>criptografar</strong> a comunicação com certificados que se renovam sozinhos.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>ServiceAccount</strong> (crachá do app), <strong>RBAC</strong> (permissões mínimas — "princípio do menor privilégio", nada de curinga <code>*</code>), <strong>TLS</strong> (criptografia), <strong>cert-manager</strong> (renova certificados sozinho).</dd></div>
+          <div><dt>Para que serve</dt><dd>Se um app for invadido, o estrago fica <strong>limitado</strong> (ele só podia fazer pouca coisa) — e ninguém consegue "escutar" o tráfego.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">O microsserviço de "ler relatório" tem um crachá que <strong>não</strong> pode apagar banco de dados. E os certificados nunca vencem, porque o cert-manager renova.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Em parte: usamos <strong>Secrets</strong> (senhas) e <strong>IAM</strong>/Pod Identity (para o driver de disco). Não montamos RBAC customizado nem cert-manager — de novo, entrega enxuta.</dd></div>
+        </dl>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Resumo rápido</h2>
+    <div class="section-rule"></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>Tema</th><th>Sigla / palavra-chave</th><th>No projeto</th></tr></thead>
+        <tbody>
+          <tr><td><span class="num2">01</span></td><td>Saúde do app + recursos</td><td>Probes · Requests/Limits</td><td><span class="s ok">USAMOS</span></td></tr>
+          <tr><td><span class="num2">02</span></td><td>Onde os pods rodam</td><td>Taint · Affinity · Eviction</td><td><span class="s no">NÃO</span></td></tr>
+          <tr><td><span class="num2">03</span></td><td>Atualizar sem quebrar</td><td>Rolling Update · Recreate</td><td><span class="s ok">USAMOS</span></td></tr>
+          <tr><td><span class="num2">04</span></td><td>Empacotamento</td><td>Helm · Chart</td><td><span class="s warn">EM PARTE</span></td></tr>
+          <tr><td><span class="num2">05</span></td><td>Deploy seguro (2 ambientes)</td><td>Blue/Green</td><td><span class="s no">NÃO</span></td></tr>
+          <tr><td><span class="num2">06</span></td><td>Deploy gradual</td><td>Canary</td><td><span class="s no">NÃO</span></td></tr>
+          <tr><td><span class="num2">07</span></td><td>Escalar máquinas</td><td>Karpenter · Spot</td><td><span class="s no">NÃO</span></td></tr>
+          <tr><td><span class="num2">08</span></td><td>Escalar apps por evento</td><td>KEDA · ScaledObject</td><td><span class="s warn">COMBINAVA</span></td></tr>
+          <tr><td><span class="num2">09</span></td><td>Segurança</td><td>RBAC · TLS · cert-manager</td><td><span class="s warn">EM PARTE</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Guia de estudo do módulo <strong>Kubernetes Avançado</strong> (FIAP · Tech Challenge Fase 2), organizado a partir do material das 9 aulas e conectado ao projeto <strong>ToggleMaster</strong>. Linguagem simplificada para leigos.
+  </footer>
+</main>

@@ -1,0 +1,235 @@
+<title>Introdução a Containers (Docker) — Guia para Leigos</title>
+<style>
+  :root{
+    --bg:#eef2f8; --surface:#ffffff; --surface-2:#e7eef7; --panel:#f5f8fc;
+    --ink:#132339; --ink-soft:#4c5f79; --ink-faint:#7787a0;
+    --line:#d3ddea; --line-soft:#e2e9f2;
+    --accent:#2f6ae0; --accent-ink:#1c4aa8; --accent-wash:#e7eefb;
+    --brass:#b26a10; --brass-wash:#f6ecdd;
+    --ok:#2c8159; --warn:#a9741a; --no:#7a869a;
+    --serif:Georgia,"Iowan Old Style","Palatino Linotype","Times New Roman",serif;
+    --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --mono:"Cascadia Code",Consolas,"SFMono-Regular",ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0c1725; --surface:#152539; --surface-2:#101f31; --panel:#132234;
+    --ink:#e6edf6; --ink-soft:#a4b6cc; --ink-faint:#7488a2;
+    --line:#26394f; --line-soft:#1d2d40;
+    --accent:#6c9cf1; --accent-ink:#9cbdf8; --accent-wash:#16273f;
+    --brass:#e0a552; --brass-wash:#241c11; --ok:#59bf8c; --warn:#e0a552; --no:#7f8aa0;}}
+  :root[data-theme="dark"]{
+    --bg:#0c1725; --surface:#152539; --surface-2:#101f31; --panel:#132234;
+    --ink:#e6edf6; --ink-soft:#a4b6cc; --ink-faint:#7488a2;
+    --line:#26394f; --line-soft:#1d2d40;
+    --accent:#6c9cf1; --accent-ink:#9cbdf8; --accent-wash:#16273f;
+    --brass:#e0a552; --brass-wash:#241c11; --ok:#59bf8c; --warn:#e0a552; --no:#7f8aa0;}
+  :root[data-theme="light"]{
+    --bg:#eef2f8; --surface:#ffffff; --surface-2:#e7eef7; --panel:#f5f8fc;
+    --ink:#132339; --ink-soft:#4c5f79; --ink-faint:#7787a0;
+    --line:#d3ddea; --line-soft:#e2e9f2;
+    --accent:#2f6ae0; --accent-ink:#1c4aa8; --accent-wash:#e7eefb;
+    --brass:#b26a10; --brass-wash:#f6ecdd; --ok:#2c8159; --warn:#a9741a; --no:#7a869a;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:clamp(20px,4vw,52px) clamp(16px,4vw,32px)}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:22px;margin-bottom:34px}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);margin:0 0 12px}
+  .masthead h1{font-family:var(--serif);font-weight:700;font-size:clamp(1.9rem,5.6vw,3rem);line-height:1.05;margin:0;text-wrap:balance;letter-spacing:-.01em}
+  .masthead .sub{font-size:clamp(1rem,2.4vw,1.18rem);color:var(--ink-soft);margin:.5em 0 0;max-width:62ch}
+  .meta{font-family:var(--mono);font-size:.74rem;color:var(--ink-faint);margin-top:16px;display:flex;flex-wrap:wrap;gap:6px 18px}
+  h2{font-family:var(--serif);font-weight:700;font-size:clamp(1.4rem,3.4vw,1.9rem);margin:52px 0 6px;letter-spacing:-.01em;text-wrap:balance}
+  .section-rule{height:3px;width:56px;background:var(--accent);border-radius:2px;margin:14px 0 24px}
+  p{max-width:68ch} .lead{color:var(--ink-soft);margin:0 0 22px;max-width:66ch} strong{color:var(--ink)}
+  .intro{display:grid;gap:16px;grid-template-columns:1fr 1fr}@media(max-width:620px){.intro{grid-template-columns:1fr}}
+  .intro .box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  .intro .box h3{margin:0 0 8px;font-size:1.05rem;font-family:var(--sans);font-weight:700}
+  .intro .box p{margin:0;font-size:.96rem;color:var(--ink-soft);max-width:none}
+  .intro .box.hi{border-color:var(--brass);background:var(--brass-wash)}
+  .glossary{background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;padding:clamp(16px,3vw,26px);display:grid;grid-template-columns:1fr 1fr;gap:2px 26px}
+  @media(max-width:640px){.glossary{grid-template-columns:1fr}}
+  .term{padding:11px 0;border-bottom:1px solid var(--line-soft)}
+  .term .k{font-family:var(--mono);font-weight:700;color:var(--accent-ink);font-size:.92rem}
+  .term .full{font-style:italic;color:var(--ink-faint);font-size:.86rem;margin-left:6px}
+  .term .d{display:block;color:var(--ink-soft);font-size:.94rem;margin-top:2px}
+  .lessons{display:flex;flex-direction:column;gap:18px}
+  .lesson{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:clamp(18px,3vw,26px);transition:border-color .18s ease}
+  .lesson:hover{border-color:var(--accent)}
+  .lesson-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
+  .num{font-family:var(--serif);font-size:2.1rem;font-weight:700;line-height:1;color:var(--accent);min-width:1.6em;font-variant-numeric:tabular-nums}
+  .lesson-head h3{margin:2px 0 8px;font-size:clamp(1.12rem,2.6vw,1.3rem);font-family:var(--sans);font-weight:700;line-height:1.25}
+  .badge{display:inline-block;font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid currentColor}
+  .badge.ok{color:var(--ok)} .badge.warn{color:var(--warn)} .badge.no{color:var(--no)}
+  .facets{margin:0;display:grid;gap:14px}
+  .facets > div{display:grid;grid-template-columns:150px 1fr;gap:4px 18px;align-items:baseline}
+  @media(max-width:600px){.facets > div{grid-template-columns:1fr}}
+  .facets dt{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink);margin:0}
+  .facets dd{margin:0;color:var(--ink-soft);font-size:.97rem} .facets dd.proj{color:var(--ink)} .facets .use{color:var(--brass)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--accent-wash);color:var(--accent-ink);padding:1px 6px;border-radius:5px}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:.92rem}
+  th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line-soft)}
+  thead th{background:var(--surface-2);font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  tbody tr:last-child td{border-bottom:none}
+  td .s{font-family:var(--mono);font-size:.78rem;font-weight:700} td .s.ok{color:var(--ok)} td .s.warn{color:var(--warn)} td .s.no{color:var(--no)}
+  td .num2{font-family:var(--serif);font-weight:700;color:var(--accent)}
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);color:var(--ink-faint);font-size:.86rem}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<main class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">Módulo 2 · DevOps e Arquitetura Cloud · FIAP</p>
+    <h1>Introdução a Containers (Docker)</h1>
+    <p class="sub">A "caixinha mágica" que empacota aplicações — em 6 aulas, com o significado de cada sigla, para que serve e um exemplo real do nosso projeto.</p>
+    <div class="meta"><span>Guia de estudo</span><span>6 aulas</span><span>+ glossário de siglas</span><span>+ conexão com o ToggleMaster</span></div>
+  </header>
+
+  <section>
+    <div class="intro">
+      <div class="box">
+        <h3>O que é um container?</h3>
+        <p>É uma <strong>"caixa"</strong> que empacota o app junto com tudo que ele precisa (código, bibliotecas, dependências). Assim ele roda <strong>igual em qualquer lugar</strong> — acabou o clássico "na minha máquina funciona". O <strong>Docker</strong> é a ferramenta que popularizou isso.</p>
+      </div>
+      <div class="box hi">
+        <h3>Por que combina com o nosso projeto</h3>
+        <p>Este módulo é a <strong>base do nosso ambiente local</strong>. Cada um dos 5 serviços tem um <strong>Dockerfile</strong>, e o <code>docker-compose.yaml</code> sobe os 9 containers de uma vez. As imagens que fizemos aqui são as mesmas que subiram para o ECR e rodaram no Kubernetes.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Glossário — o significado das siglas</h2>
+    <div class="section-rule"></div>
+    <p class="lead">Todos os termos que aparecem nas aulas, em uma linha cada.</p>
+    <div class="glossary">
+      <div class="term"><span class="k">Container</span><span class="d">A "caixa" com o app + tudo que ele precisa, isolada e igual em qualquer lugar.</span></div>
+      <div class="term"><span class="k">Imagem</span><span class="d">O "molde" (receita) a partir do qual os containers são criados.</span></div>
+      <div class="term"><span class="k">Docker</span><span class="d">A ferramenta mais popular para criar e rodar containers.</span></div>
+      <div class="term"><span class="k">VM</span><span class="full">Máquina Virtual</span><span class="d">O jeito antigo, mais "pesado": simula um computador inteiro. O container é bem mais leve.</span></div>
+      <div class="term"><span class="k">Dockerfile</span><span class="d">A "receita" em texto que descreve como montar a imagem, passo a passo.</span></div>
+      <div class="term"><span class="k">build</span><span class="d">O ato de "cozinhar" a receita (Dockerfile) e gerar a imagem.</span></div>
+      <div class="term"><span class="k">Layer</span><span class="full">camada</span><span class="d">A imagem é feita de camadas empilhadas — o que acelera builds e economiza espaço.</span></div>
+      <div class="term"><span class="k">Tag</span><span class="d">A "etiqueta" de versão de uma imagem (ex.: <code>:latest</code>, <code>:1.0</code>).</span></div>
+      <div class="term"><span class="k">Docker Hub</span><span class="d">A "loja" pública de imagens prontas (Nginx, Postgres, etc.).</span></div>
+      <div class="term"><span class="k">Registry</span><span class="full">registro</span><span class="d">Um "armazém" de imagens. O Docker Hub é um; o ECR da AWS é outro.</span></div>
+      <div class="term"><span class="k">ECR</span><span class="full">Elastic Container Registry</span><span class="d">O armazém de imagens da AWS (onde guardamos as nossas 5).</span></div>
+      <div class="term"><span class="k">Volume</span><span class="d">Um "HD" ligado ao container para guardar dados que não podem sumir.</span></div>
+      <div class="term"><span class="k">Rede (network)</span><span class="d">A "rede interna" que deixa os containers conversarem entre si por nome.</span></div>
+      <div class="term"><span class="k">Docker Compose</span><span class="d">Ferramenta que sobe VÁRIOS containers de uma vez, a partir de um arquivo YAML.</span></div>
+      <div class="term"><span class="k">YAML</span><span class="d">O formato de texto (com recuos) usado nos arquivos de configuração.</span></div>
+      <div class="term"><span class="k">Multistage build</span><span class="d">Truque de Dockerfile: usar um estágio para compilar e outro, enxuto, para rodar.</span></div>
+      <div class="term"><span class="k">Alpine</span><span class="d">Uma imagem base minúscula do Linux — deixa a imagem final leve e mais segura.</span></div>
+      <div class="term"><span class="k">docker pull/run/ps/stop</span><span class="d">Comandos básicos: baixar imagem / rodar container / listar / parar.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>As 6 aulas, uma a uma</h2>
+    <div class="section-rule"></div>
+    <p class="lead">Cada ficha tem o mesmo esqueleto: em palavras simples, para que serve, um caso de uso e a conexão com o ToggleMaster.</p>
+
+    <div class="lessons">
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">01</span><div>
+          <h3>Introdução a Containers</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>O que é um container, por que ele resolve o "na minha máquina funciona", e em que ele é diferente (e mais leve) que uma <strong>máquina virtual (VM)</strong>.</dd></div>
+          <div><dt>Para que serve</dt><dd>Empacotar um app de um jeito que ele rode idêntico no dev, no teste e na produção.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Rodar o seu primeiro container (ex.: um Nginx) com um comando, sem instalar nada no sistema.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Todos os <strong>5 microsserviços</strong> são conteinerizados — é por isso que rodam igual no notebook e na AWS.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">02</span><div>
+          <h3>Imagens e Containers</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>A diferença entre <strong>imagem</strong> (o molde/receita) e <strong>container</strong> (o prato pronto, rodando). E o <strong>Docker Hub</strong>, a loja de imagens.</dd></div>
+          <div><dt>Siglas e termos</dt><dd>Imagem, container, tag, Docker Hub; comandos <code>docker pull</code>, <code>run</code>, <code>ps</code>, <code>stop</code>; ciclo de vida.</dd></div>
+          <div><dt>Para que serve</dt><dd>Entender que de uma imagem você cria quantos containers quiser — e gerenciar esse ciclo.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Baixar a imagem oficial do Postgres do Docker Hub e subir um banco em segundos.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Usamos imagens prontas (<code>postgres:16-alpine</code>, <code>redis:7-alpine</code>) e criamos as nossas 5, guardadas no <strong>ECR</strong> e no Docker Hub.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">03</span><div>
+          <h3>Dockerfile e Build de Imagens</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>O <strong>Dockerfile</strong> é a "receita" para montar a sua própria imagem. E como deixá-la leve e segura para produção.</dd></div>
+          <div><dt>Siglas e termos</dt><dd>Dockerfile, <code>build</code>, <strong>multistage build</strong> (separa compilar de rodar), imagens base enxutas (<strong>alpine</strong>), segurança.</dd></div>
+          <div><dt>Para que serve</dt><dd>Empacotar o SEU app numa imagem própria — pequena, rápida e sem riscos desnecessários.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Um multistage build que compila em Go num estágio e copia só o binário para uma imagem alpine minúscula.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Cada serviço tem seu <strong>Dockerfile</strong>; usamos imagens base <strong>alpine</strong> (Go e Python) para manter as imagens leves.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">04</span><div>
+          <h3>Volumes e Redes</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Quando um container morre, tudo dentro dele some. Os <strong>volumes</strong> guardam os dados de forma durável; as <strong>redes</strong> deixam os containers conversarem entre si.</dd></div>
+          <div><dt>Siglas e termos</dt><dd>Volume (persistir dados), rede Docker (comunicação por nome), isolamento.</dd></div>
+          <div><dt>Para que serve</dt><dd>Não perder dados de bancos e organizar a comunicação entre vários containers.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Um volume guarda os dados do Postgres; uma rede deixa a API achar o banco pelo nome.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">No <code>docker-compose.yaml</code> usamos <strong>volumes</strong> (<code>pg_auth_data</code>, <code>pg_app_data</code>) e uma <strong>rede</strong> (<code>toggle-net</code>) para os serviços se acharem pelo nome.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">05</span><div>
+          <h3>Docker Compose</h3>
+          <span class="badge ok">É o nosso projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Orquestrar <strong>vários containers de uma vez</strong> com um único arquivo YAML, em vez de subir cada um na mão.</dd></div>
+          <div><dt>Siglas e termos</dt><dd>Docker Compose, <code>docker compose up</code>, serviços, redes, volumes, <code>depends_on</code>, healthcheck.</dd></div>
+          <div><dt>Para que serve</dt><dd>Descrever a aplicação inteira (apps + bancos + cache) num arquivo e subir tudo com um comando.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Um <code>docker compose up</code> sobe API + banco + Redis já conectados, prontos para desenvolver.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Nosso <strong><code>docker-compose.yaml</code> é exatamente isto</strong>: sobe os <strong>9 containers</strong> (5 serviços + 2 Postgres + Redis + DynamoDB local) com um comando só.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">06</span><div>
+          <h3>Boas Práticas, Segurança e Troubleshooting</h3>
+          <span class="badge warn">Usamos em parte</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>O que separa "só faz rodar" de "entrega robusto": otimizar imagens, cuidar da segurança (do build à execução) e saber diagnosticar quando dá problema.</dd></div>
+          <div><dt>Siglas e termos</dt><dd>Imagens enxutas, não rodar como root, healthchecks, <code>docker logs</code>, <code>docker inspect</code>, troubleshooting.</dd></div>
+          <div><dt>Para que serve</dt><dd>Deixar o ambiente mais leve, seguro e confiável — e resolver problemas rápido.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Um container não sobe; você usa <code>docker logs</code> para ver o erro e corrigir.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Aplicamos parte: imagens <strong>alpine</strong> enxutas e <strong>healthchecks</strong> em todos os serviços. Vários problemas reais foram resolvidos lendo <code>docker compose logs</code>.</dd></div>
+        </dl>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Resumo rápido</h2>
+    <div class="section-rule"></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>Tema</th><th>Palavra-chave</th><th>No ToggleMaster</th></tr></thead>
+        <tbody>
+          <tr><td><span class="num2">01</span></td><td>Introdução a containers</td><td>Container vs VM</td><td><span class="s ok">USAMOS (5 serviços)</span></td></tr>
+          <tr><td><span class="num2">02</span></td><td>Imagens e containers</td><td>Imagem · Docker Hub</td><td><span class="s ok">USAMOS (ECR)</span></td></tr>
+          <tr><td><span class="num2">03</span></td><td>Dockerfile e build</td><td>Dockerfile · alpine</td><td><span class="s ok">USAMOS (5 Dockerfiles)</span></td></tr>
+          <tr><td><span class="num2">04</span></td><td>Volumes e redes</td><td>Volume · network</td><td><span class="s ok">USAMOS (compose)</span></td></tr>
+          <tr><td><span class="num2">05</span></td><td>Docker Compose</td><td>docker compose up</td><td><span class="s ok">É O PROJETO</span></td></tr>
+          <tr><td><span class="num2">06</span></td><td>Boas práticas + segurança</td><td>Otimização · logs</td><td><span class="s warn">EM PARTE</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Guia de estudo do módulo <strong>Introdução a Containers</strong> (FIAP · Tech Challenge Fase 2), organizado a partir do material das 6 aulas e conectado ao projeto <strong>ToggleMaster</strong>. Linguagem simplificada para leigos.
+  </footer>
+</main>
