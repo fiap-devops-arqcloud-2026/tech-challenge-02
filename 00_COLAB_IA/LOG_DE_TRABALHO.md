@@ -2,7 +2,27 @@
 
 > **TL;DR:** Diário de sessões. Nunca apagar/reescrever entradas antigas — só acrescentar no topo. A cada ~5 entradas, resumir as antigas no DOSSIE e manter só as 5 recentes aqui.
 >
-> **Última atualização:** 2026-07-09 — Claude (Fable 5)
+> **Última atualização:** 2026-07-17 — Claude (Opus 4.8)
+
+---
+
+## 2026-07-17 16:00 (BRT) — Claude (Opus 4.8) — Material de estudo: guias para leigos dos 6 módulos + tabela no README
+
+**Contexto:** sessões educacionais a pedido do Gabriel. Ele quis entender os módulos do curso da FIAP em linguagem simples e ter material de consulta. Não é trabalho de entrega — a Fase 2 já estava 100% concluída; isto é material didático de apoio.
+
+**Feito:**
+- **Explicações para leigo** de todos os módulos do curso (Kubernetes Básico e Avançado, Escalabilidade nos Servidores, Servidores Web/Balanceamento e os módulos 1-2-3 que tínhamos pulado), sempre conectando cada conceito ao projeto ToggleMaster.
+- **README** — nova seção "Recursos avançados do Kubernetes (referência para evolução)": tabela dos 9 tópicos avançados (Helm, Blue/Green, Canary, RBAC, KEDA, Karpenter, etc.) com uma **coluna nova "Requisito p/ entrega"** (✅ obrigatório / 🟡 opcional / 💡 desejável) + um exemplo do nosso projeto em cada linha. Commit `a4e5042`.
+- **6 guias de estudo em HTML** (um por módulo da Fase 2), mesmo formato visual: glossário de siglas + uma ficha por aula (o que é / para que serve / caso de uso) + selo "No ToggleMaster". Salvos dentro de cada pasta em `docs/Material aulas/<1..6>/GUIA-ESTUDO-*.html` e publicados como Artifacts (links privados, ficaram no chat). Commit `a7547ba` (6 arquivos, +1584 linhas).
+- Os PDFs originais das aulas da FIAP já tinham sido adicionados ao repo em `155bd58` (Add Material FIAP).
+
+**Decisões/Por quê:** nenhuma decisão de arquitetura nova (não gerou ADR). O guia do **módulo 1** foi montado como um "mapa da Fase 2", pois o PDF de origem é o texto de boas-vindas do curso (não tem aulas técnicas).
+
+**Arquivos:** `README.md`; `docs/Material aulas/<1..6>/GUIA-ESTUDO-*.html` (6 novos); PDFs em `docs/Material aulas/`.
+
+**Descobertas:** estado da infra AWS inalterado (tudo segue excluído desde 2026-07-09). Detalhe operacional: os nomes das pastas dos módulos usam **acentos decompostos (NFD, origem Mac)** — para manipular via shell foi preciso usar curingas/variáveis em vez de digitar o nome.
+
+**Estado p/ o próximo agente:** entrega da Fase 2 continua concluída; nada pendente de entrega. Esta sessão só adicionou material de estudo (commitado e no GitHub, branch `dev`). Única pendência aberta do projeto segue sendo **P-009** (excluir em definitivo a chave IAM antiga antes de eventual publicação).
 
 ---
 
