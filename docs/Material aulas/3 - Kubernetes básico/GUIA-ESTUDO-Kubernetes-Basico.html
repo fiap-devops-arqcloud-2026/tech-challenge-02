@@ -1,0 +1,257 @@
+<title>Kubernetes Básico — Guia para Leigos</title>
+<style>
+  :root{
+    --bg:#eef2f8; --surface:#ffffff; --surface-2:#e7eef7; --panel:#f5f8fc;
+    --ink:#132339; --ink-soft:#4c5f79; --ink-faint:#7787a0;
+    --line:#d3ddea; --line-soft:#e2e9f2;
+    --accent:#2f6ae0; --accent-ink:#1c4aa8; --accent-wash:#e7eefb;
+    --brass:#b26a10; --brass-wash:#f6ecdd;
+    --ok:#2c8159; --warn:#a9741a; --no:#7a869a;
+    --serif:Georgia,"Iowan Old Style","Palatino Linotype","Times New Roman",serif;
+    --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --mono:"Cascadia Code",Consolas,"SFMono-Regular",ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0c1725; --surface:#152539; --surface-2:#101f31; --panel:#132234;
+    --ink:#e6edf6; --ink-soft:#a4b6cc; --ink-faint:#7488a2;
+    --line:#26394f; --line-soft:#1d2d40;
+    --accent:#6c9cf1; --accent-ink:#9cbdf8; --accent-wash:#16273f;
+    --brass:#e0a552; --brass-wash:#241c11; --ok:#59bf8c; --warn:#e0a552; --no:#7f8aa0;}}
+  :root[data-theme="dark"]{
+    --bg:#0c1725; --surface:#152539; --surface-2:#101f31; --panel:#132234;
+    --ink:#e6edf6; --ink-soft:#a4b6cc; --ink-faint:#7488a2;
+    --line:#26394f; --line-soft:#1d2d40;
+    --accent:#6c9cf1; --accent-ink:#9cbdf8; --accent-wash:#16273f;
+    --brass:#e0a552; --brass-wash:#241c11; --ok:#59bf8c; --warn:#e0a552; --no:#7f8aa0;}
+  :root[data-theme="light"]{
+    --bg:#eef2f8; --surface:#ffffff; --surface-2:#e7eef7; --panel:#f5f8fc;
+    --ink:#132339; --ink-soft:#4c5f79; --ink-faint:#7787a0;
+    --line:#d3ddea; --line-soft:#e2e9f2;
+    --accent:#2f6ae0; --accent-ink:#1c4aa8; --accent-wash:#e7eefb;
+    --brass:#b26a10; --brass-wash:#f6ecdd; --ok:#2c8159; --warn:#a9741a; --no:#7a869a;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:clamp(20px,4vw,52px) clamp(16px,4vw,32px)}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:22px;margin-bottom:34px}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);margin:0 0 12px}
+  .masthead h1{font-family:var(--serif);font-weight:700;font-size:clamp(2rem,6vw,3.1rem);line-height:1.05;margin:0;text-wrap:balance;letter-spacing:-.01em}
+  .masthead .sub{font-size:clamp(1rem,2.4vw,1.18rem);color:var(--ink-soft);margin:.5em 0 0;max-width:62ch}
+  .meta{font-family:var(--mono);font-size:.74rem;color:var(--ink-faint);margin-top:16px;display:flex;flex-wrap:wrap;gap:6px 18px}
+  h2{font-family:var(--serif);font-weight:700;font-size:clamp(1.4rem,3.4vw,1.9rem);margin:52px 0 6px;letter-spacing:-.01em;text-wrap:balance}
+  .section-rule{height:3px;width:56px;background:var(--accent);border-radius:2px;margin:14px 0 24px}
+  p{max-width:68ch} .lead{color:var(--ink-soft);margin:0 0 22px;max-width:66ch} strong{color:var(--ink)}
+  .intro{display:grid;gap:16px;grid-template-columns:1fr 1fr}@media(max-width:620px){.intro{grid-template-columns:1fr}}
+  .intro .box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  .intro .box h3{margin:0 0 8px;font-size:1.05rem;font-family:var(--sans);font-weight:700}
+  .intro .box p{margin:0;font-size:.96rem;color:var(--ink-soft);max-width:none}
+  .intro .box.hi{border-color:var(--brass);background:var(--brass-wash)}
+  .glossary{background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;padding:clamp(16px,3vw,26px);display:grid;grid-template-columns:1fr 1fr;gap:2px 26px}
+  @media(max-width:640px){.glossary{grid-template-columns:1fr}}
+  .term{padding:11px 0;border-bottom:1px solid var(--line-soft)}
+  .term .k{font-family:var(--mono);font-weight:700;color:var(--accent-ink);font-size:.92rem}
+  .term .full{font-style:italic;color:var(--ink-faint);font-size:.86rem;margin-left:6px}
+  .term .d{display:block;color:var(--ink-soft);font-size:.94rem;margin-top:2px}
+  .lessons{display:flex;flex-direction:column;gap:18px}
+  .lesson{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:clamp(18px,3vw,26px);transition:border-color .18s ease}
+  .lesson:hover{border-color:var(--accent)}
+  .lesson-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
+  .num{font-family:var(--serif);font-size:2.1rem;font-weight:700;line-height:1;color:var(--accent);min-width:1.6em;font-variant-numeric:tabular-nums}
+  .lesson-head h3{margin:2px 0 8px;font-size:clamp(1.12rem,2.6vw,1.3rem);font-family:var(--sans);font-weight:700;line-height:1.25}
+  .badge{display:inline-block;font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid currentColor}
+  .badge.ok{color:var(--ok)} .badge.warn{color:var(--warn)} .badge.no{color:var(--no)}
+  .facets{margin:0;display:grid;gap:14px}
+  .facets > div{display:grid;grid-template-columns:150px 1fr;gap:4px 18px;align-items:baseline}
+  @media(max-width:600px){.facets > div{grid-template-columns:1fr}}
+  .facets dt{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink);margin:0}
+  .facets dd{margin:0;color:var(--ink-soft);font-size:.97rem} .facets dd.proj{color:var(--ink)} .facets .use{color:var(--brass)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--accent-wash);color:var(--accent-ink);padding:1px 6px;border-radius:5px}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:.92rem}
+  th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line-soft)}
+  thead th{background:var(--surface-2);font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  tbody tr:last-child td{border-bottom:none}
+  td .s{font-family:var(--mono);font-size:.78rem;font-weight:700} td .s.ok{color:var(--ok)} td .s.warn{color:var(--warn)} td .s.no{color:var(--no)}
+  td .num2{font-family:var(--serif);font-weight:700;color:var(--accent)}
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);color:var(--ink-faint);font-size:.86rem}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<main class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">Módulo 3 · DevOps e Arquitetura Cloud · FIAP</p>
+    <h1>Kubernetes Básico</h1>
+    <p class="sub">A fundação do Kubernetes em 7 aulas: o que é, suas peças, e como se põe uma aplicação no ar — com o significado de cada sigla e um exemplo real do nosso projeto.</p>
+    <div class="meta"><span>Guia de estudo</span><span>7 aulas</span><span>+ glossário de siglas</span><span>+ conexão com o ToggleMaster</span></div>
+  </header>
+
+  <section>
+    <div class="intro">
+      <div class="box">
+        <h3>O que é Kubernetes?</h3>
+        <p>É o "maestro" que organiza aplicações empacotadas em <strong>containers</strong>: decide onde cada uma roda, reinicia o que quebra e cria mais cópias quando o movimento aperta. Apelido: <strong>K8s</strong> (K + 8 letras + s).</p>
+      </div>
+      <div class="box hi">
+        <h3>Por que combina com o nosso projeto</h3>
+        <p>Este módulo é a <strong>fundação de todos os nossos manifestos</strong> (a pasta <code>infra/k8s/</code>). Cada peça que ele ensina — Pod, Deployment, Service, ConfigMap, Secret, Ingress, StatefulSet, HPA — existe de verdade no ToggleMaster.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Glossário — o significado das siglas</h2>
+    <div class="section-rule"></div>
+    <p class="lead">Todos os termos e siglas que aparecem nas aulas, em uma linha cada.</p>
+    <div class="glossary">
+      <div class="term"><span class="k">K8s</span><span class="full">Kubernetes</span><span class="d">O "maestro" que organiza os containers.</span></div>
+      <div class="term"><span class="k">Cluster</span><span class="d">O conjunto de máquinas que o Kubernetes gerencia como se fossem uma só.</span></div>
+      <div class="term"><span class="k">Control Plane</span><span class="d">O "cérebro/gerência" do cluster: toma as decisões.</span></div>
+      <div class="term"><span class="k">Worker Node</span><span class="full">nó de trabalho</span><span class="d">A máquina que de fato roda os seus apps (os pods).</span></div>
+      <div class="term"><span class="k">API Server</span><span class="d">A "recepção central": recebe todos os comandos do cluster.</span></div>
+      <div class="term"><span class="k">etcd</span><span class="d">O "banco de memória" onde o Kubernetes guarda o estado de tudo.</span></div>
+      <div class="term"><span class="k">Scheduler</span><span class="d">O "planejador" que escolhe em qual nó cada pod vai rodar.</span></div>
+      <div class="term"><span class="k">kubelet</span><span class="d">O agente que roda em cada nó e executa o que o cérebro mandou.</span></div>
+      <div class="term"><span class="k">Pod</span><span class="d">A menor "caixinha" do Kubernetes; roda 1 container (às vezes poucos).</span></div>
+      <div class="term"><span class="k">Deployment</span><span class="d">O "gerente" que mantém os pods no ar, recria os que caem e atualiza versões.</span></div>
+      <div class="term"><span class="k">ReplicaSet</span><span class="d">Quem garante o número certo de cópias (réplicas) de um pod. O Deployment usa ele.</span></div>
+      <div class="term"><span class="k">Service</span><span class="d">Um "endereço fixo" para achar os pods (que vivem mudando de IP).</span></div>
+      <div class="term"><span class="k">ClusterIP</span><span class="d">O tipo de Service que só é visível dentro do cluster (interno).</span></div>
+      <div class="term"><span class="k">ConfigMap</span><span class="d">Guarda configurações NÃO secretas (portas, URLs).</span></div>
+      <div class="term"><span class="k">Secret</span><span class="d">Guarda dados sensíveis (senhas, chaves) — o "cofre".</span></div>
+      <div class="term"><span class="k">Ingress</span><span class="d">A "portaria" que recebe URLs de fora e roteia para o serviço certo.</span></div>
+      <div class="term"><span class="k">Namespace</span><span class="d">Uma "pasta" dentro do cluster que separa os recursos de um projeto.</span></div>
+      <div class="term"><span class="k">kubectl</span><span class="d">O "controle remoto": o comando que você usa para falar com o cluster.</span></div>
+      <div class="term"><span class="k">Manifesto</span><span class="d">O arquivo YAML que descreve o que você quer (o pod, o service…).</span></div>
+      <div class="term"><span class="k">Minikube / Kind</span><span class="d">Ferramentas para rodar um Kubernetes de mentira no seu notebook (estudo).</span></div>
+      <div class="term"><span class="k">Probe</span><span class="full">sonda</span><span class="d">Checagem de saúde: readiness ("está pronto?") e liveness ("está vivo?").</span></div>
+      <div class="term"><span class="k">PV / PVC</span><span class="full">Persistent Volume / Claim</span><span class="d">O "HD virtual" persistente (PV) e o "pedido" desse HD (PVC).</span></div>
+      <div class="term"><span class="k">StorageClass</span><span class="d">O "tipo de disco" que o cluster cria automaticamente (na AWS, um volume EBS).</span></div>
+      <div class="term"><span class="k">StatefulSet</span><span class="d">Como um Deployment, mas para apps COM estado (bancos), com disco fixo.</span></div>
+      <div class="term"><span class="k">HPA</span><span class="full">Horizontal Pod Autoscaler</span><span class="d">Cria/remove pods automaticamente conforme o uso de CPU.</span></div>
+      <div class="term"><span class="k">EKS</span><span class="full">Elastic Kubernetes Service</span><span class="d">O Kubernetes gerenciado da AWS (onde subimos o projeto).</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>As 7 aulas, uma a uma</h2>
+    <div class="section-rule"></div>
+    <p class="lead">Cada ficha tem o mesmo esqueleto: em palavras simples, para que serve, um caso de uso e a conexão com o ToggleMaster.</p>
+
+    <div class="lessons">
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">01</span><div>
+          <h3>Introdução e Arquitetura do Kubernetes</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>O que é o Kubernetes, o que é um <strong>cluster</strong> e por que ele virou o padrão para rodar apps em containers em escala.</dd></div>
+          <div><dt>Para que serve</dt><dd>Automatizar a implantação, o "conserto" e o crescimento de aplicações — sem fazer tudo na mão.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Uma empresa com dezenas de microsserviços usa o Kubernetes para manter todos no ar e escalar sob demanda.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Rodamos tudo no <strong>EKS</strong> (o Kubernetes da AWS) — 5 microsserviços orquestrados num cluster.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">02</span><div>
+          <h3>Control Plane e Worker Nodes</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>As duas "metades" do cluster: o <strong>Control Plane</strong> (o cérebro/gerência) e os <strong>Worker Nodes</strong> (as máquinas que fazem o trabalho).</dd></div>
+          <div><dt>Siglas e termos</dt><dd>No cérebro: <strong>API Server</strong> (recepção), <strong>etcd</strong> (memória), <strong>Scheduler</strong> (planejador). Nos nós: <strong>kubelet</strong> (o agente executor).</dd></div>
+          <div><dt>Para que serve</dt><dd>Separar quem DECIDE de quem EXECUTA — o que dá resiliência e escala.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Um nó cai; o cérebro percebe e recria os pods daquele nó nos que sobraram.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">A <strong>AWS cuida do Control Plane</strong> (a gente nem vê); criamos só os <strong>2 worker nodes</strong> (c7i-flex.large) onde os pods rodam.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">03</span><div>
+          <h3>Preparando o Ambiente e Primeiro Contato</h3>
+          <span class="badge warn">Usamos em parte</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Como montar um Kubernetes para estudar (<strong>Minikube/Kind</strong>, no notebook) e o <strong>kubectl</strong> — o comando com que se fala com o cluster.</dd></div>
+          <div><dt>Siglas e termos</dt><dd>Minikube, Kind (Kubernetes in Docker), Docker Desktop, <strong>kubectl</strong>, <code>kubectl get/apply/describe</code>.</dd></div>
+          <div><dt>Para que serve</dt><dd>Praticar Kubernetes sem custo e aprender a ferramenta principal do dia a dia.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Rodar um cluster de mentira no notebook com o Kind e testar manifestos antes de ir pra nuvem.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Usamos bastante o <strong>kubectl</strong> (para aplicar tudo e depurar). Não usamos Minikube/Kind — fomos direto para o <strong>EKS</strong> na nuvem.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">04</span><div>
+          <h3>Rodando a Primeira Aplicação: Pods e Deployments</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>O <strong>Pod</strong> é a menor "caixinha" que roda um container. O <strong>Deployment</strong> é o "gerente" que mantém os pods no ar, recria os que caem e atualiza versões.</dd></div>
+          <div><dt>Siglas e termos</dt><dd>Pod, Deployment, ReplicaSet, réplicas, <em>self-healing</em> (autocura), rolling update, <code>requests/limits</code>, probes, labels/selectors.</dd></div>
+          <div><dt>Para que serve</dt><dd>Manter a aplicação sempre no ar, com o número certo de cópias, e atualizar sem downtime.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Você pede "quero 3 cópias deste app"; se uma morrer, o Deployment cria outra sozinho.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Temos <strong>5 Deployments</strong> (um por serviço), cada um com <code>requests/limits</code> e probes de saúde (<code>/health</code>).</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">05</span><div>
+          <h3>Expondo Aplicações e Configurações</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Como os apps se acham (<strong>Service</strong>), como o mundo de fora entra (<strong>Ingress</strong>) e como guardar configurações (<strong>ConfigMap</strong>) e segredos (<strong>Secret</strong>).</dd></div>
+          <div><dt>Siglas e termos</dt><dd>Service (ClusterIP/NodePort/LoadBalancer), <strong>Ingress</strong>, <strong>ConfigMap</strong> (config não secreta), <strong>Secret</strong> (senhas), DNS interno.</dd></div>
+          <div><dt>Para que serve</dt><dd>Dar endereços estáveis, expor por URL de forma organizada e separar a configuração do código.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">O <code>/api</code> chega no serviço A e o <code>/web</code> no serviço B, tudo por um Ingress só.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Usamos <strong>todos</strong>: Services (ClusterIP) para os 5 serviços, o <strong>Ingress</strong> (roteia <code>/evaluate</code>, <code>/flags</code>…), e ConfigMaps + Secrets em cada serviço.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">06</span><div>
+          <h3>Gerenciando Estado com Volumes Persistentes</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>Pods são descartáveis — se morrem, perdem tudo. Para apps <strong>com estado</strong> (bancos), usa-se um "HD virtual" que sobrevive (o volume persistente) e o <strong>StatefulSet</strong>.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>PV</strong> (Persistent Volume) e <strong>PVC</strong> (o pedido do disco), <strong>StorageClass</strong> (tipo de disco criado sob demanda), <strong>StatefulSet</strong>, <em>access modes</em> (RWO).</dd></div>
+          <div><dt>Para que serve</dt><dd>Guardar dados de forma durável, que sobrevivem a reinícios do pod.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">Um banco de dados rodando como pod, com um disco preso a ele que não some se o pod reiniciar.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">É o nosso <strong><code>postgres-targeting</code></strong>: um banco rodando como <strong>StatefulSet</strong> com um <strong>PVC</strong> que vira um disco <strong>EBS</strong> na AWS.</dd></div>
+        </dl>
+      </article>
+
+      <article class="lesson">
+        <div class="lesson-head"><span class="num">07</span><div>
+          <h3>Escalabilidade Automática da Aplicação</h3>
+          <span class="badge ok">Usamos no projeto</span></div></div>
+        <dl class="facets">
+          <div><dt>Em miúdos</dt><dd>O <strong>HPA</strong> cria e remove pods automaticamente conforme a carga (o uso de CPU) sobe ou desce.</dd></div>
+          <div><dt>Siglas e termos</dt><dd><strong>HPA</strong> (Horizontal — mais pods), <strong>VPA</strong> (Vertical — pods maiores), <strong>Cluster Autoscaler</strong> (mais nós), Metrics Server, KEDA (por eventos).</dd></div>
+          <div><dt>Para que serve</dt><dd>Aguentar picos automaticamente e economizar recursos quando a carga cai.</dd></div>
+          <div><dt>Caso de uso</dt><dd class="use">A CPU passa de 70% → o HPA sobe de 2 para 5 pods; a carga cai → volta para 2.</dd></div>
+          <div><dt>No ToggleMaster</dt><dd class="proj">Temos <strong>HPA</strong> no <code>evaluation</code> e no <code>analytics</code> (min 1 / max 2, por CPU), com o <strong>Metrics Server</strong> instalado — exatamente o que o desafio exigia.</dd></div>
+        </dl>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Resumo rápido</h2>
+    <div class="section-rule"></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>Tema</th><th>Palavra-chave</th><th>No ToggleMaster</th></tr></thead>
+        <tbody>
+          <tr><td><span class="num2">01</span></td><td>Introdução e arquitetura</td><td>Cluster · K8s</td><td><span class="s ok">USAMOS (EKS)</span></td></tr>
+          <tr><td><span class="num2">02</span></td><td>Control Plane e Worker Nodes</td><td>API Server · kubelet</td><td><span class="s ok">USAMOS</span></td></tr>
+          <tr><td><span class="num2">03</span></td><td>Ambiente e kubectl</td><td>Minikube · kubectl</td><td><span class="s warn">kubectl SIM · local NÃO</span></td></tr>
+          <tr><td><span class="num2">04</span></td><td>Pods e Deployments</td><td>Pod · Deployment</td><td><span class="s ok">USAMOS (5×)</span></td></tr>
+          <tr><td><span class="num2">05</span></td><td>Expor apps e configurações</td><td>Service · Ingress · Secret</td><td><span class="s ok">USAMOS</span></td></tr>
+          <tr><td><span class="num2">06</span></td><td>Volumes persistentes</td><td>PVC · StatefulSet</td><td><span class="s ok">USAMOS (targeting)</span></td></tr>
+          <tr><td><span class="num2">07</span></td><td>Escalabilidade automática</td><td>HPA · Metrics Server</td><td><span class="s ok">USAMOS</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Guia de estudo do módulo <strong>Kubernetes Básico</strong> (FIAP · Tech Challenge Fase 2), organizado a partir do material das 7 aulas e conectado ao projeto <strong>ToggleMaster</strong>. Linguagem simplificada para leigos.
+  </footer>
+</main>
