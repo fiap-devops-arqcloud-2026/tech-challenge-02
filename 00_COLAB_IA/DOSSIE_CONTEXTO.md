@@ -5,7 +5,7 @@
 > excluídos. Em 2026-07-08, o estado atual do repositório foi saneado para futura publicação:
 > `.env` local, Secrets com placeholders e bootstrap da chave documentado no README.
 >
-> **Última atualização:** 2026-07-08 — Codex
+> **Última atualização:** 2026-07-17 — Claude (Opus 4.8)
 
 ## 1. Objetivo
 Migrar o monolito ToggleMaster (Fase 1) para 5 microsserviços conteinerizados rodando no Kubernetes (AWS EKS). Entregáveis: vídeo (até 20 min) mostrando local + nuvem + escalabilidade, e relatório com nomes/RMs/links. +10 pts extras com a trilha do Google Cloud Skills Boost.
@@ -39,6 +39,7 @@ Migrar o monolito ToggleMaster (Fase 1) para 5 microsserviços conteinerizados r
 - `infra/k8s/00-namespaces.yaml` — namespace `togglemaster`.
 - `GUIA-AWS.md` — guia de deploy (DESATUALIZADO: 3 RDS/us-east-1; ver F-002/P-006 — tem aviso no topo).
 - `POSTECH - Tech Challenge - Fase 2.pdf` — enunciado oficial da FIAP (requisitos técnicos + entregáveis).
+- `docs/Material aulas/<1..6>/` — PDFs das aulas da FIAP + um `GUIA-ESTUDO-*.html` por módulo (material de estudo para leigos, criado em 2026-07-17).
 - Memória privada do Claude (não compartilhada, NÃO sincroniza entre máquinas): `project_togglemaster.md` e afins.
 
 ### Infraestrutura AWS já criada (IDs reais)
@@ -57,7 +58,7 @@ Migrar o monolito ToggleMaster (Fase 1) para 5 microsserviços conteinerizados r
 - **ElastiCache:** `togglemaster-redis` — endpoint `togglemaster-redis.ewbn3x.ng.0001.use2.cache.amazonaws.com:6379` (Redis OSS 7.1, sub-rede privada, SG `sg-0e79721741070ef64` com 6379 liberado p/ 10.0.0.0/16). Já no `evaluation-service/configmap.yaml`.
 - **Security group da camada de dados:** `sg-0e79721741070ef64` (libera 5432 do RDS e 6379 do Redis para os pods do EKS).
 - **EKS `togglemaster-cluster` (criado 2026-06-29, status Active):** pelo console (não eksctl). K8s 1.30, endpoint Public and private, control plane nas 2 sub-redes públicas, sem scaling tier, sem Auto Mode. Add-ons: CoreDNS, kube-proxy, Amazon VPC CNI, EKS Pod Identity Agent, Node monitoring agent, **Metrics Server** (community). Observability/logs desligados.
-- **A criar:** node group (`workers`, 2× t3.medium, Min 1 / Desejado 2 / Máx 4), EBS CSI Driver, Nginx Ingress Controller; depois deploy dos manifestos.
+- **Histórico do deploy:** node group `workers` (2× c7i-flex.large — D-007), EBS CSI Driver e Nginx Ingress foram criados em 2026-07-06 e a aplicação rodou ponta a ponta. **Toda essa infra foi EXCLUÍDA em 2026-07-09** (custo ~US$0). Para religar: seguir o `GUIA-AWS.md` do zero e gerar credenciais novas.
 
 ## 5. Processos
 - Build/push: `docker compose build` → tag → push para ECR (us-east-2) e DockerHub (`tocaccelli/*`).
@@ -69,7 +70,7 @@ Migrar o monolito ToggleMaster (Fase 1) para 5 microsserviços conteinerizados r
 Ver `DECISOES.md`. Resumo: D-001 targeting como pod · D-002 não Academy · D-003 us-east-2 · D-004 ElastiCache/SQS/DynamoDB gerenciados · D-005 versionar a 00_COLAB_IA no Git · **D-006 entrega mínima FIAP (1 réplica/serviço; HPA só evaluation+analytics min1/max2; node group 2× t3.medium)**.
 
 ## 7. Pendências
-Ver `PENDENCIAS_E_PROXIMOS_PASSOS.md`. **Próxima tarefa: criar o node group** (2× t3.medium, Min1/Des2/Máx4); o control plane do cluster já está Active.
+Ver `PENDENCIAS_E_PROXIMOS_PASSOS.md`. **Fase 2 ENTREGUE** (deploy 2026-07-06, vídeo publicado, infra excluída 2026-07-09). Nada pendente de entrega; única pendência aberta é **P-009** (excluir em definitivo a chave IAM antiga antes de eventual publicação do repo).
 
 ## 8. Glossário
 - **Feature flag:** interruptor que liga/desliga funcionalidade sem novo deploy.
@@ -92,6 +93,10 @@ Ver `PENDENCIAS_E_PROXIMOS_PASSOS.md`. **Próxima tarefa: criar o node group** (
 - **2026-06-25:** testes locais ok (vídeo gravado); infra AWS criada (IAM, ECR, VPC, 2 RDS); bateu o limite de RDS → targeting como pod (aprovado pelo professor); correção de região; manifestos do pod criados; pasta de colaboração montada; DynamoDB, SQS e ElastiCache criados.
 - **2026-06-28:** decisão de sincronizar entre 2 notebooks → passamos a versionar a `00_COLAB_IA/` no Git e criamos o `CLAUDE.md` raiz; auditoria e correção das docs.
 - **2026-06-29:** validamos a rede (o VPC já tinha 2 AZs → F-003 resolvido); criamos as 2 IAM roles e o **control plane do cluster EKS** (console, Active, K8s 1.30) com Metrics Server como add-on; enxugamos os manifestos para a entrega mínima da FIAP (1 réplica/serviço; HPA evaluation+analytics min1/max2 — D-006). Próximo: node group + add-ons + deploy.
+- **2026-07-06:** **DEPLOY COMPLETO** — node group (2× c7i-flex.large — D-007), EBS CSI Driver e Nginx Ingress criados; app verificada ponta a ponta (flags via LB, evento SQS→analytics→DynamoDB, HPAs). **Vídeo gravado** e cluster derrubado logo após.
+- **2026-07-08:** repo saneado para eventual publicação (`.env` local, secrets com placeholders — D-008); chave IAM antiga desativada; docs de replicação (README/GUIA-AWS) alinhadas. Vídeo publicado (`https://youtu.be/YpunNwLpf40`).
+- **2026-07-09:** infra AWS cara **TOTALMENTE excluída** (EKS, 2 RDS, ElastiCache, EBS órfão) — custo ~US$0. Sobra só DynamoDB/SQS/ECR no Free Tier.
+- **2026-07-17:** sessão didática — criados **6 guias de estudo para leigos** (um por módulo, em `docs/Material aulas/`) + tabela "Recursos avançados do Kubernetes" no README. Sem mudança de infra ou de arquitetura.
 
 ## 11. Memória interna (Claude) ↔ espelho
 A pasta `00_COLAB_IA/` é a ponte entre agentes. IDs não secretos e decisões podem ser

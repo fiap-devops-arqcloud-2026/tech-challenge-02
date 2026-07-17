@@ -4,7 +4,7 @@
 > **Infra AWS TOTALMENTE EXCLUÍDA em 2026-07-09** (EKS, RDS auth+flags, ElastiCache, EBS órfão) — custo ~US$0.
 > Chave IAM `togglemaster-deploy` revogada. Sobra só DynamoDB/SQS/ECR (Free Tier). Nada pendente de entrega.
 >
-> **Última atualização:** 2026-07-09 — Claude (Fable 5).
+> **Última atualização:** 2026-07-17 — Claude (Opus 4.8).
 
 ## Concluído
 
@@ -56,6 +56,12 @@
 - `docs/ARQUITETURA.md` — arquitetura para leigos + diagrama Mermaid + decisões + 9 dificuldades.
 - `docs/apresentacao/ToggleMaster_Fase2.pptx` — apresentação do projeto.
 - Roteiro do vídeo — no chat de 2026-07-06 (e resumido no LOG).
+
+## Material didático de apoio (2026-07-17 — não é entregável, é estudo)
+- `docs/Material aulas/<1..6>/GUIA-ESTUDO-*.html` — **6 guias de estudo para leigos**, um por
+  módulo do curso, explicando siglas/conceitos e ligando cada tema ao ToggleMaster. Commit `a7547ba`.
+- `README.md` → seção "Recursos avançados do Kubernetes (referência para evolução)": tabela dos
+  9 tópicos avançados com a coluna "Requisito p/ entrega" (obrigatório/opcional/desejável). Commit `a4e5042`.
 
 ## Achados (F-###)
 - **F-001 — Inconsistência de região** (us-east-1 vs us-east-2). ✅ RESOLVIDO (commit 498f703).
